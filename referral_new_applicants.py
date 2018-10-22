@@ -40,17 +40,17 @@ try:
 	cur_rs= con_rs.cursor()
 	cur_rs.execute('''
 		SELECT
-			u.user_id as applicant_id,
-			u.user_email as applicant_email,
-			u.user_fullname as applicant_fullname,
-			d.min_do_journey_id as first_do_journey_id,
-			agd.first_do_start_at_local_dttm as first_do_local_dttm,
-			DATEADD(week, %s, agd.first_do_start_at_local_dttm) as dateline_dttm,
-			r.region_id as first_do_region_id,
-			r.region_time_zone as time_zone,
-			r.agency_id as first_do_agency_id,
+			applicant.id_driver as applicant_id,
+			applicant2.ds_email as applicant_email,
+			applicant.ds_name||' '||applicant.ds_surname as applicant_fullname,
+			j.id_journey as first_do_journey_id,
+			min_do.tm_start_local_at as first_do_local_dttm,
+			DATEADD(week, 4, min_do.tm_start_local_at) as dateline_dttm,
+			r.id_region as first_do_region_id,
+			r.ds_time_zone as time_zone,
+			a.id_agency as first_do_agency_id,
 			ad.ds_driver_invitation_code as applicant_code,
-			--gf.user_id as godfather_id,
+			--godfather.id_user as godfather_id,
 			'e890e087420df9a537a7d070e9c69fa6' as godfather_id,
 			0 as do_num,
 			'on_time' as state,
@@ -63,19 +63,19 @@ try:
 			getdate() as updated_at_utc,
 			null as updated_at_local
 		FROM
-			dwh.agg_drivers agd
-			inner join dwh.dim_driver d on agd.driver_sk = d.driver_sk
-			inner join dwh.t_dim_user u on d.user_sk = u.user_sk
-			inner join dwh.t_dim_region r on agd.first_do_region_sk = r.region_sk
-			inner join datawarehouse.ops_dim_driver dd on u.user_id = dd.id_driver
-			inner join datawarehouse.lgt_fac_applicantdetail ad on dd.fk_applicant_id = ad.sk_applicantdetail
-			inner join dwh.t_dim_user gf on lower(trim(ad.ds_driver_invitation_code)) = lower(trim(gf.user_email))
-		--WHERE
-			--r.agency_id IN ('33f0e9373e981d2425d4da8d005a610b') /*CO*/
-			--d.min_do_start_at_utc_dt = date_trunc('day', DATEADD(day, -1, GETDATE() ))
-			--date_trunc('month',agd.first_do_start_at_local_dttm) in ('2018-09-01','2018-08-01','2018-07-01')
-		--limit 2
-			''',(week_num_limit,week_num_limit,required_do_num,amount_granted_godfather, amount_granted_applicant))
+			datawarehouse.ops_fac_journey_min_do_driver min_do
+			inner join datawarehouse.ops_fac_journey j on min_do.sk_journey = j.sk_journey
+			inner join datawarehouse.ops_dim_agency a on j.fk_agency_id = a.sk_agency
+			inner join datawarehouse.ops_dim_region r on j.fk_region_id = r.sk_region
+			inner join datawarehouse.ops_dim_driver applicant on min_do.fk_driver_id = applicant.sk_driver
+			inner join datawarehouse.ops_dim_user applicant2 on applicant.id_driver = applicant2.id_user
+			inner join datawarehouse.lgt_fac_applicantdetail ad on applicant.fk_applicant_id = ad.sk_applicantdetail
+			inner join datawarehouse.ops_dim_user godfather on lower(trim(ad.ds_driver_invitation_code)) = lower(trim(godfather.ds_email))
+		WHERE
+			date_trunc('month',min_do.tm_start_local_at) in ('2018-09-01','2018-08-01','2018-07-01')
+			--j.dt_start_local_at = date_trunc('day', DATEADD(day, -1, GETDATE()))
+			and a.id_agency IN ('33f0e9373e981d2425d4da8d005a610b') /*CO*/
+		''',(week_num_limit,week_num_limit,required_do_num,amount_granted_godfather, amount_granted_applicant))
 except psycopg2.Error as e:
 	print('Unable to read new participants: '+ str(e))
 	slack_message('Unable to read new participants: '+ str(e))
