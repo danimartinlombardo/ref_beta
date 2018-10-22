@@ -31,8 +31,7 @@ current_applicants = cur_pg.fetchall()
 print (len(current_applicants))
 current_applicants_id=[i[0] for i in current_applicants]
 
-
-INSERT NEW APPLICANTS
+#INSERT NEW APPLICANTS
 print ('Fetching new valid applicants... ', end='')
 try:
 	con_rs=psycopg2.connect(dbname= 'dwh', host='cabify-datawarehouse.cxdpjwjwbg9i.eu-west-1.redshift.amazonaws.com', port= '5439', user= rs_user, password= rs_pass)
