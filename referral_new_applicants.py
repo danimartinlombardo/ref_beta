@@ -4,6 +4,8 @@ import requests
 from credentials import *
 from config_CO import *
 
+start_time = time.time()
+
 braze_headers = slack_headers = {'Content-Type': "application/json", 'Cache-Control': "no-cache"}
 
 def slack_message (text):
@@ -104,4 +106,4 @@ for applicant in valid_applicants:
 		slack_message('Unable to insert new participants: '+ str(e))
 		exit()
 
-slack_message('Referrals: new applicants added succesfully')
+slack_message("Referrals: new applicants added succesfully. Runtime: %s seconds" % round(time.time() - start_time, 2))')

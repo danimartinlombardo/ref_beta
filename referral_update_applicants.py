@@ -1,8 +1,11 @@
 import psycopg2
 import os
 import requests
+import time
 from credentials import *
 from config_CO import *
+
+start_time = time.time()
 
 braze_headers = slack_headers = {'Content-Type': "application/json", 'Cache-Control': "no-cache"}
 
@@ -14,6 +17,8 @@ os.system('clear')
 
 #UPDATE APPLICANTS: DB
 try:
+	con_pg = psycopg2.connect(dbname= 'maxi_new', host='sql.cabify.com', user=pg_user, password= pg_pass)
+	cur_pg = con_pg.cursor()
 	cur_pg.execute('''
 		UPDATE bp.referral_participants_temp
 		SET
@@ -109,4 +114,4 @@ for godfather in braze_arrays:
 		print ('Braze attributes update error')
 		slack_message('Braze attributes update error')
 		
-slack_message('Referrals: applicants info updated succesfully')
+slack_message("Referrals: applicants info updated succesfully. Runtime: %s seconds" % round(time.time() - start_time, 2))
