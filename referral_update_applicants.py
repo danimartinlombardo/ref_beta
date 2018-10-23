@@ -62,6 +62,7 @@ try:
 	con_pg.commit()
 except psycopg2.Error as e:
 	slack_message(': <!channel> ERROR Unable to update participants data: '+ str(e))
+	print(': <!channel> ERROR Unable to update participants data: '+ str(e))
 	exit()
 #print('Program DO & states updated')
 
@@ -96,6 +97,7 @@ try:
 	#print ('Braze arrays ready to upload')
 except psycopg2.Error as e:
 	slack_message(': <!channel> ERROR Unable to create Braze arrays: '+ str(e))
+	print(': <!channel> ERROR Unable to create Braze arrays: '+ str(e))
 	exit()
 braze_arrays = cur_pg.fetchall()
 for godfather in braze_arrays:	
@@ -103,8 +105,9 @@ for godfather in braze_arrays:
 		# payload as string
 		braze_payload = "{\n  \"api_key\": \""+braze_api+"\",\n  \"attributes\": [ \n \t{\n \t  \"external_id\":\""+godfather[0]+"\",\n      \"referrals_name_str\": "+godfather[1]+",\n      \"referrals_email_str\": "+godfather[2]+",\n      \"referrals_dateline_str\": "+godfather[3]+",\n      \"referrals_required_do_str\": "+godfather[4]+",\n      \"referrals_state_str\": "+godfather[5]+",\n      \"referrals_actual_do_str\": "+godfather[6]+",\n      \"referrals_updated_at_local_str\": "+godfather[7]+"\n    }\n   ]\n}"
 		response = requests.request("POST", url = "https://rest.iad-01.braze.com/users/track", data=braze_payload, headers=braze_headers)
-		#print (godfather[0] + ' Braze attributes updated. Response '+response.text)
+		print (godfather[0] + ' Braze attributes updated. Response '+response.text)
 	except:
 		slack_message(': <!channel> ERROR Braze attributes update error')
+		print(': <!channel> ERROR Braze attributes update error')
 		
 slack_message(": Script loaded succesfully. . Runtime: %s seconds" % round(time.time() - start_time, 2))
