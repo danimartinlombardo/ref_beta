@@ -1,5 +1,6 @@
 import psycopg2
 import os
+import sys
 import requests
 from credentials import *
 from config_CO import *
@@ -9,13 +10,13 @@ start_time = time.time()
 braze_headers = slack_headers = {'Content-Type': "application/json", 'Cache-Control': "no-cache"}
 
 def slack_message (text):
-	slack_payload = "{\n\t\"text\": \""+text+"\"\n}"
+	slack_payload = "{\n\t\"text\": \""+os.path.basename(__file__)+text+"\"\n}"
 	slack = requests.request("POST", slack_url, data=slack_payload, headers=slack_headers)	
 
 os.system('clear')
 
-#FETCH CURRENT PARTICIPANTS
-print ('Fetching existing participants... ', end='')
+###FETCH CURRENT PARTICIPANTS
+#print ('Fetching existing participants... ', end='')
 try:
 	con_pg = psycopg2.connect(dbname= 'maxi_new', host='sql.cabify.com', user=pg_user, password= pg_pass)
 	cur_pg = con_pg.cursor()
@@ -26,15 +27,13 @@ try:
 			bp.referral_participants_temp
 		''')
 except Exception as e:
-	print('Unable to read current participants: '+ str(e))
-	slack_message('Unable to read current participants: '+ str(e))
+	slack_message(': <!channel> ERROR Unable to read current participants: '+ str(e))
 	exit()
 current_applicants = cur_pg.fetchall()
-print (len(current_applicants))
+#print (len(current_applicants))
 current_applicants_id=[i[0] for i in current_applicants]
-
-#INSERT NEW APPLICANTS
-print ('Fetching new valid applicants... ', end='')
+###INSERT NEW APPLICANTS
+#print ('Fetching new valid applicants... ', end='')
 try:
 	con_rs=psycopg2.connect(dbname= 'dwh', host='cabify-datawarehouse.cxdpjwjwbg9i.eu-west-1.redshift.amazonaws.com', port= '5439', user= rs_user, password= rs_pass)
 	cur_rs= con_rs.cursor()
@@ -72,20 +71,18 @@ try:
 			inner join datawarehouse.lgt_fac_applicantdetail ad on applicant.fk_applicant_id = ad.sk_applicantdetail
 			inner join datawarehouse.ops_dim_user godfather on lower(trim(ad.ds_driver_invitation_code)) = lower(trim(godfather.ds_email))
 		WHERE
-			date_trunc('month',min_do.tm_start_local_at) in ('2018-09-01','2018-08-01','2018-07-01')
-			--j.dt_start_local_at = date_trunc('day', DATEADD(day, -1, GETDATE()))
+			j.dt_start_local_at = date_trunc('day', DATEADD(day, -1, GETDATE()))
 			and a.id_agency IN ('33f0e9373e981d2425d4da8d005a610b') /*CO*/
 		''',(week_num_limit,week_num_limit,required_do_num,amount_granted_godfather, amount_granted_applicant))
 except psycopg2.Error as e:
-	print('Unable to read new participants: '+ str(e))
-	slack_message('Unable to read new participants: '+ str(e))
+	slack_message(': <!channel> ERROR Unable to read new participants: '+ str(e))
 	exit()
 valid_applicants = cur_rs.fetchall()
 print (len(valid_applicants))
 
 for applicant in valid_applicants:
 	if applicant[0] in current_applicants_id:
-		print (applicant[0] + ' Skipped: already on the program')
+		#print (applicant[0] + ' Skipped: already on the program')
 		continue
 	try:
 		cur_pg.execute('''
@@ -93,17 +90,16 @@ for applicant in valid_applicants:
 			VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
 			(applicant[0], applicant[1], applicant[2], applicant[3], applicant[4], applicant[5], applicant[6], applicant[7], applicant[8], applicant[9], applicant[10], applicant[11], applicant[12], applicant[13], applicant[14], applicant[15], applicant[16], applicant[17], applicant[18], applicant[19], applicant[20]))
 		con_pg.commit()
-		print (applicant[0] + ' applicant included', end='')
+		#print (applicant[0] + ' applicant included', end='')
 		try:
 			braze_payload = "{\n  \"api_key\": \""+braze_api+"\",\n  \"campaign_id\": \"3b3e9cbd-f984-b2ad-89a0-4c8a3e3a90a4\",\n  \"recipients\": [\n     {\n      \"external_user_id\": \""+applicant[9]+"\"\n     }\n   ]\n}"
 			response = requests.request("POST", url = "https://rest.iad-01.braze.com/campaigns/trigger/send", data=braze_payload, headers=braze_headers)
-			print ('. Braze response:'+response.text)
+			#print ('. Braze response:'+response.text)
 		except:
-			print('. Error while sending comm')
+			print(': <!channel> ERROR Unable to send push to godfather (new applicants)')
 
 	except psycopg2.Error as e:
-		print('Unable to insert new participants: '+ str(e))
-		slack_message('Unable to insert new participants: '+ str(e))
+		slack_message(': <!channel> ERROR Unable to insert new participants: '+ str(e))
 		exit()
 
-slack_message("Referrals: new applicants added succesfully. Runtime: %s seconds" % round(time.time() - start_time, 2))')
+slack_message(": Script loaded succesfully. Runtime: %s seconds" % round(time.time() - start_time, 2))')

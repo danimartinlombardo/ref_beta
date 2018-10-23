@@ -1,5 +1,5 @@
 import psycopg2
-import os
+import os, sys
 import requests
 import time
 from credentials import *
@@ -10,12 +10,12 @@ start_time = time.time()
 braze_headers = slack_headers = {'Content-Type': "application/json", 'Cache-Control': "no-cache"}
 
 def slack_message (text):
-	slack_payload = "{\n\t\"text\": \""+text+"\"\n}"
+	slack_payload = "{\n\t\"text\": \""+os.path.basename(__file__)+text+"\"\n}"
 	slack = requests.request("POST", slack_url, data=slack_payload, headers=slack_headers)	
 
 os.system('clear')
 
-#UPDATE APPLICANTS: DB
+###UPDATE APPLICANTS: DB
 try:
 	con_pg = psycopg2.connect(dbname= 'maxi_new', host='sql.cabify.com', user=pg_user, password= pg_pass)
 	cur_pg = con_pg.cursor()
@@ -61,14 +61,12 @@ try:
 	''', (required_do_num,))
 	con_pg.commit()
 except psycopg2.Error as e:
-	print('Unable to update participants data: '+ str(e))
-	slack_message('Unable to update participants data: '+ str(e))
+	slack_message(': <!channel> ERROR Unable to update participants data: '+ str(e))
 	exit()
-print('Program DO & states updated')
+#print('Program DO & states updated')
 
-#UPDATE APPLICANTS: BRAZE
+###UPDATE APPLICANTS: BRAZE
 try:
-	#using strings 
 	cur_pg.execute("""	
 		SELECT
 			q.external_id,
@@ -95,23 +93,18 @@ try:
 			ORDER BY rp.godfather_id, rp.created_at_utc, rp.applicant_email) q
 		GROUP BY 1;
 	""")
-	print ('Braze arrays ready to upload')
+	#print ('Braze arrays ready to upload')
 except psycopg2.Error as e:
-	print('Unable to create Braze arrays: '+ str(e))
-	slack_message('Unable to create Braze arrays: '+ str(e))
+	slack_message(': <!channel> ERROR Unable to create Braze arrays: '+ str(e))
 	exit()
 braze_arrays = cur_pg.fetchall()
 for godfather in braze_arrays:	
 	try:
 		# payload as string
-		print (godfather[3])
-		print (godfather[7])
 		braze_payload = "{\n  \"api_key\": \""+braze_api+"\",\n  \"attributes\": [ \n \t{\n \t  \"external_id\":\""+godfather[0]+"\",\n      \"referrals_name_str\": "+godfather[1]+",\n      \"referrals_email_str\": "+godfather[2]+",\n      \"referrals_dateline_str\": "+godfather[3]+",\n      \"referrals_required_do_str\": "+godfather[4]+",\n      \"referrals_state_str\": "+godfather[5]+",\n      \"referrals_actual_do_str\": "+godfather[6]+",\n      \"referrals_updated_at_local_str\": "+godfather[7]+"\n    }\n   ]\n}"
-		print(braze_payload)
 		response = requests.request("POST", url = "https://rest.iad-01.braze.com/users/track", data=braze_payload, headers=braze_headers)
-		print (godfather[0] + ' Braze attributes updated. Response '+response.text)
+		#print (godfather[0] + ' Braze attributes updated. Response '+response.text)
 	except:
-		print ('Braze attributes update error')
-		slack_message('Braze attributes update error')
+		slack_message(': <!channel> ERROR Braze attributes update error')
 		
-slack_message("Referrals: applicants info updated succesfully. Runtime: %s seconds" % round(time.time() - start_time, 2))
+slack_message(": Script loaded succesfully. . Runtime: %s seconds" % round(time.time() - start_time, 2))
