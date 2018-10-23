@@ -6,6 +6,8 @@ from credentials import *
 from config_CO import *
 
 start_time = time.time()
+duplicated = 0
+new = 0
 
 braze_headers = slack_headers = {'Content-Type': "application/json", 'Cache-Control': "no-cache"}
 
@@ -83,6 +85,7 @@ print (len(valid_applicants))
 for applicant in valid_applicants:
 	if applicant[0] in current_applicants_id:
 		#print (applicant[0] + ' Skipped: already on the program')
+		duplicated = duplicated + 1
 		continue
 	try:
 		cur_pg.execute('''
@@ -90,6 +93,7 @@ for applicant in valid_applicants:
 			VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
 			(applicant[0], applicant[1], applicant[2], applicant[3], applicant[4], applicant[5], applicant[6], applicant[7], applicant[8], applicant[9], applicant[10], applicant[11], applicant[12], applicant[13], applicant[14], applicant[15], applicant[16], applicant[17], applicant[18], applicant[19], applicant[20]))
 		con_pg.commit()
+		new = new + 1
 		#print (applicant[0] + ' applicant included', end='')
 		try:
 			braze_payload = "{\n  \"api_key\": \""+braze_api+"\",\n  \"campaign_id\": \"3b3e9cbd-f984-b2ad-89a0-4c8a3e3a90a4\",\n  \"recipients\": [\n     {\n      \"external_user_id\": \""+applicant[9]+"\"\n     }\n   ]\n}"
@@ -102,4 +106,4 @@ for applicant in valid_applicants:
 		slack_message(': <!channel> ERROR Unable to insert new participants: '+ str(e))
 		exit()
 
-slack_message(": Script loaded succesfully. Runtime: %s seconds" % round(time.time() - start_time, 2))')
+slack_message(": Script loaded succesfully. Runtime: %s seconds.\nExisting participants: %s.\nNew applicants: %s.\nExcluded duplicated: %s" % round(time.time() - start_time, 2), len(current_applicants), str(new), str(duplicated))
