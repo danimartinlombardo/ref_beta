@@ -57,7 +57,7 @@ try:
 				group by 1,2,3,4) a
       		) AS data_update
 		WHERE
-			referral_participants_temp.applicant_id=data_update.applicant_id
+			referral_participants.applicant_id=data_update.applicant_id
 	''', (required_do_num,))
 	con_pg.commit()
 except psycopg2.Error as e:
