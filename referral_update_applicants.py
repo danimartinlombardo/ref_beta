@@ -20,7 +20,7 @@ try:
 	con_pg = psycopg2.connect(dbname= 'maxi_new', host='sql.cabify.com', user=pg_user, password= pg_pass)
 	cur_pg = con_pg.cursor()
 	cur_pg.execute('''
-		UPDATE bp.referral_participants_temp
+		UPDATE bp.referral_participants
 		SET
 			do_num = data_update.do_num,
     		state = (case
@@ -47,7 +47,7 @@ try:
 					r.time_zone,
 					count(j.journey_id) as do_num
 				FROM
-					bp.referral_participants_temp rf
+					bp.referral_participants rf
 					inner join journeys j on rf.applicant_id = j.driver_id
 					inner join regions r on j.region_id = r.region_id
 				WHERE
@@ -88,7 +88,7 @@ try:
 				(case when rp.state='clear' then NULL else (rp.do_num)::text end) as actual_do_quote,
 				(case when rp.state='clear' then NULL else ''''||(to_char(rp.updated_at_local,'DD/MM/YYYY HH:MI'))||'''' end) as updated_at_local_quote
 			FROM
-				bp.referral_participants_temp rp
+				bp.referral_participants rp
 			WHERE rp.state != 'obsolete'
 			ORDER BY rp.godfather_id, rp.created_at_utc, rp.applicant_email) q
 		GROUP BY 1;

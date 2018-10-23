@@ -27,7 +27,7 @@ try:
 		SELECT
 			distinct (applicant_id)
 		FROM
-			bp.referral_participants_temp
+			bp.referral_participants
 		''')
 except Exception as e:
 	slack_message(': <!channel> ERROR Unable to read current participants: '+ str(e))
@@ -90,7 +90,7 @@ for applicant in valid_applicants:
 		continue
 	try:
 		cur_pg.execute('''
-			INSERT INTO bp.referral_participants_temp
+			INSERT INTO bp.referral_participants
 			VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
 			(applicant[0], applicant[1], applicant[2], applicant[3], applicant[4], applicant[5], applicant[6], applicant[7], applicant[8], applicant[9], applicant[10], applicant[11], applicant[12], applicant[13], applicant[14], applicant[15], applicant[16], applicant[17], applicant[18], applicant[19], applicant[20]))
 		con_pg.commit()
