@@ -2,6 +2,7 @@ import psycopg2
 import os
 import sys
 import requests
+import time
 from credentials import *
 from config_CO import *
 
@@ -46,7 +47,7 @@ try:
 			applicant.ds_name||' '||applicant.ds_surname as applicant_fullname,
 			j.id_journey as first_do_journey_id,
 			min_do.tm_start_local_at as first_do_local_dttm,
-			DATEADD(week, 4, min_do.tm_start_local_at) as dateline_dttm,
+			DATEADD(week, %s, min_do.tm_start_local_at) as dateline_dttm,
 			r.id_region as first_do_region_id,
 			r.ds_time_zone as time_zone,
 			a.id_agency as first_do_agency_id,
@@ -106,4 +107,4 @@ for applicant in valid_applicants:
 		slack_message(': <!channel> ERROR Unable to insert new participants: '+ str(e))
 		exit()
 
-slack_message(": Script loaded succesfully. Runtime: %s seconds.\nExisting participants: %s.\nNew applicants: %s.\nExcluded duplicated: %s" % round(time.time() - start_time, 2), len(current_applicants), str(new), str(duplicated))
+slack_message(": Script loaded succesfully. Runtime: {0} seconds.\nExisting participants: {1}\nNew applicants: {2}\nExcluded duplicated: {3}".format((round(time.time() - start_time, 2)), len(current_applicants), (new), (duplicated)))
