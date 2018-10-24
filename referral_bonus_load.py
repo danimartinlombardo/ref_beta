@@ -45,9 +45,9 @@ except psycopg2.Error as e:
 	print('Unable read bonus request data: '+ str(e))
 	slack_message(': <!channel> ERROR Unable read bonus request data: '+ str(e))
 	exit()
-requests = cur_pg.fetchall()
+b_requests = cur_pg.fetchall()
 ###INSERT NEW BONUS DATA & COMMS
-for request in requests:
+for request in b_requests:
 	try:
 		con_pg_google = psycopg2.connect(dbname= 'bonuses_production', host='35.187.79.123', user=pg_google_user, password= pg_google_pass)
 		cur_pg_google = con_pg_google.cursor()
@@ -92,7 +92,7 @@ for request in requests:
 		print('Unable to update bonus request id: '+ str(e))
 		slack_message(': <!channel> ERROR Unable to update bonus request id: '+ str(e))
 		exit()
-slack_message(": Script loaded succesfully. Runtime: {0} seconds.\nNew bonus requests: {1}\n".format((round(time.time() - start_time, 2)), len(requests)))
+slack_message(": Script loaded succesfully. Runtime: {0} seconds.\nNew bonus requests: {1}\n".format((round(time.time() - start_time, 2)), len(b_requests)))
 
 
 
