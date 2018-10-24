@@ -29,7 +29,7 @@ try:
 				%s as currency,
 				%s as currency_factor,
 				%s as tax_code,
-				date_trunc('day', Now())::date as amount_dated_at,
+				date_trunc('day', Now()-Interval'1 day')::date as amount_dated_at,
 				'Referral program. Referrer: '||rf.godfather_id||'. Applicant: '||rf.applicant_id as notes,
 				'Programa de referidos: referido '||rf.applicant_fullname||' ('||rf.applicant_email||')' as explanation,
 				'referral' as category,
