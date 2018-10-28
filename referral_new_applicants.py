@@ -76,7 +76,7 @@ try:
 			inner join datawarehouse.lgt_fac_applicantdetail ad on applicant.fk_applicant_id = ad.sk_applicantdetail
 			inner join datawarehouse.ops_dim_user godfather on lower(trim(ad.ds_driver_invitation_code)) = lower(trim(godfather.ds_email))
 		WHERE
-			j.dt_start_local_at > date_trunc('day', DATEADD(day, -4, GETDATE()))
+			j.dt_start_local_at > date_trunc('day', DATEADD(day, -6, GETDATE()))
 			and j.dt_start_local_at < date_trunc('day', GETDATE())
 			and a.id_agency IN ('33f0e9373e981d2425d4da8d005a610b') /*CO*/
 		''',(week_num_limit,week_num_limit,required_do_num,amount_granted_godfather, amount_granted_applicant))
