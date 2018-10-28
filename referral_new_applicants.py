@@ -19,7 +19,7 @@ def slack_message (text):
 os.system('clear')
 
 ###FETCH CURRENT PARTICIPANTS
-#print ('Fetching existing participants... ', end='')
+print ('Fetching existing participants... ', end='')
 try:
 	con_pg = psycopg2.connect(dbname= 'maxi_new', host='sql.cabify.com', user=pg_user, password= pg_pass)
 	cur_pg = con_pg.cursor()
@@ -34,11 +34,11 @@ except Exception as e:
 	slack_message(': <!channel> ERROR Unable to read current participants: '+ str(e))
 	exit()
 current_applicants = cur_pg.fetchall()
-#print (len(current_applicants))
+print (len(current_applicants))
 current_applicants_id=[i[0] for i in current_applicants]
 current_applicants_combo=[i[1] for i in current_applicants]
 ###INSERT NEW APPLICANTS
-#print ('Fetching new valid applicants... ', end='')
+print ('Fetching new valid applicants... ', end='')
 try:
 	con_rs=psycopg2.connect(dbname= 'dwh', host='cabify-datawarehouse.cxdpjwjwbg9i.eu-west-1.redshift.amazonaws.com', port= '5439', user= rs_user, password= rs_pass)
 	cur_rs= con_rs.cursor()
@@ -76,7 +76,7 @@ try:
 			inner join datawarehouse.lgt_fac_applicantdetail ad on applicant.fk_applicant_id = ad.sk_applicantdetail
 			inner join datawarehouse.ops_dim_user godfather on lower(trim(ad.ds_driver_invitation_code)) = lower(trim(godfather.ds_email))
 		WHERE
-			j.dt_start_local_at > date_trunc('day', DATEADD(day, -6, GETDATE()))
+			j.dt_start_local_at > date_trunc('day', DATEADD(day, -4, GETDATE()))
 			and j.dt_start_local_at < date_trunc('day', GETDATE())
 			and a.id_agency IN ('33f0e9373e981d2425d4da8d005a610b') /*CO*/
 		''',(week_num_limit,week_num_limit,required_do_num,amount_granted_godfather, amount_granted_applicant))
@@ -90,7 +90,7 @@ for applicant in valid_applicants:
 	if applicant[21] in current_applicants_combo:
 		continue
 	if applicant[0] in current_applicants_id:
-		#print (applicant[0] + ' Skipped: already on the program')
+		print (applicant[0] + ' Skipped: already on the program')
 		duplicated = duplicated + 1
 		continue
 	try:
@@ -100,11 +100,11 @@ for applicant in valid_applicants:
 			(applicant[0], applicant[1], applicant[2], applicant[3], applicant[4], applicant[5], applicant[6], applicant[7], applicant[8], applicant[9], applicant[10], applicant[11], applicant[12], applicant[13], applicant[14], applicant[15], applicant[16], applicant[17], applicant[18], applicant[19], applicant[20]))
 		con_pg.commit()
 		new = new + 1
-		#print (applicant[0] + ' applicant included', end='')
+		print (applicant[0] + ' applicant included', end='')
 		try:
 			braze_payload = "{\n  \"api_key\": \""+braze_api+"\",\n  \"campaign_id\": \"3b3e9cbd-f984-b2ad-89a0-4c8a3e3a90a4\",\n  \"recipients\": [\n     {\n      \"external_user_id\": \""+applicant[9]+"\"\n     }\n   ]\n}"
 			response = requests.request("POST", url = "https://rest.iad-01.braze.com/campaigns/trigger/send", data=braze_payload, headers=braze_headers)
-			#print ('. Braze response:'+response.text)
+			print ('. Braze response:'+response.text)
 		except:
 			print(': <!channel> ERROR Unable to send push to godfather (new applicants)')
 
