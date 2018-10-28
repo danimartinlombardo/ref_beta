@@ -25,7 +25,8 @@ try:
 	cur_pg = con_pg.cursor()
 	cur_pg.execute('''
 		SELECT
-			distinct (applicant_id)
+			distinct (applicant_id),
+			applicant_id||godfather_id
 		FROM
 			bp.referral_participants
 		''')
@@ -35,6 +36,7 @@ except Exception as e:
 current_applicants = cur_pg.fetchall()
 #print (len(current_applicants))
 current_applicants_id=[i[0] for i in current_applicants]
+current_applicants_combo=[i[1] for i in current_applicants]
 ###INSERT NEW APPLICANTS
 #print ('Fetching new valid applicants... ', end='')
 try:
@@ -52,8 +54,7 @@ try:
 			r.ds_time_zone as time_zone,
 			a.id_agency as first_do_agency_id,
 			ad.ds_driver_invitation_code as applicant_code,
-			--godfather.id_user as godfather_id,
-			'e890e087420df9a537a7d070e9c69fa6' as godfather_id,
+			godfather.id_user as godfather_id,
 			0 as do_num,
 			'on_time' as state,
 			%s as conditions_week_num,
@@ -63,7 +64,8 @@ try:
 			NULL as bonus_request_id,
 			getdate() as created_at_utc,
 			getdate() as updated_at_utc,
-			null as updated_at_local
+			null as updated_at_local, 
+			applicant.id_driver||godfather.id_user as combo
 		FROM
 			datawarehouse.ops_fac_journey_min_do_driver min_do
 			inner join datawarehouse.ops_fac_journey j on min_do.sk_journey = j.sk_journey
@@ -85,6 +87,8 @@ valid_applicants = cur_rs.fetchall()
 print (len(valid_applicants))
 
 for applicant in valid_applicants:
+	if applicant[21] in current_applicants_combo:
+		continue
 	if applicant[0] in current_applicants_id:
 		#print (applicant[0] + ' Skipped: already on the program')
 		duplicated = duplicated + 1
