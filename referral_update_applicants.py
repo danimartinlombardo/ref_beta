@@ -39,7 +39,7 @@ try:
 				a.do_num,
 				a.dateline_dttm,
 				a.time_zone,
-				a.conditions_required_do
+				a.conditions_required_do,
 				a.do_strange_num
 			FROM (
 				SELECT
