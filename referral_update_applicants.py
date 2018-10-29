@@ -23,6 +23,7 @@ try:
 		UPDATE bp.referral_participants
 		SET
 			do_num = data_update.do_num,
+			do_strange_num = data_update.do_strange_num,
     		state = (case
 					when data_update.dateline_dttm < ((Now() at time zone data_update.time_zone) - Interval '9 days') then 'obsolete'
 					when data_update.dateline_dttm < ((Now() at time zone data_update.time_zone) - Interval '7 days') then 'clear'
@@ -39,13 +40,17 @@ try:
 				a.dateline_dttm,
 				a.time_zone,
 				a.conditions_required_do
+				a.do_strange_num
 			FROM (
 				SELECT
 					rf.applicant_id,
 					rf.dateline_dttm,
 					rf.conditions_required_do,
 					r.time_zone,
-					count(j.journey_id) as do_num
+					count(j.journey_id) as do_num,
+					SUM(case 
+        				when j.alerts like '%distance_too_short%' or j.alerts like '%duration_too_short%' 
+        				then 1 end) as do_strange_num
 				FROM
 					bp.referral_participants rf
 					inner join journeys j on rf.applicant_id = j.driver_id
