@@ -19,7 +19,7 @@ os.system('clear')
 try:
 	con_pg = psycopg2.connect(dbname= 'maxi_new', host='sql.cabify.com', user=pg_user, password= pg_pass)
 	cur_pg = con_pg.cursor()
-	cur_pg.execute('''
+	cur_pg.execute("""
 		UPDATE bp.referral_participants
 		SET
 			do_num = data_update.do_num,
@@ -63,7 +63,7 @@ try:
       		) AS data_update
 		WHERE
 			referral_participants.applicant_id=data_update.applicant_id
-	''', (required_do_num,))
+	""")
 	con_pg.commit()
 except psycopg2.Error as e:
 	slack_message(': <!channel> ERROR Unable to update participants data: '+ str(e))
