@@ -110,4 +110,4 @@ for godfather in braze_arrays:
 		slack_message(': <!channel> ERROR Braze attributes update error')
 		print(': <!channel> ERROR Braze attributes update error')
 		
-slack_message(": Script loaded succesfully. . Runtime: %s seconds" % round(time.time() - start_time, 2))
+slack_message(": Script loaded succesfully. Runtime: %s seconds" % round(time.time() - start_time, 2))

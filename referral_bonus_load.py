@@ -77,13 +77,6 @@ for request in b_requests:
 			SET
 				bonus_request_id = %s,
 	    		updated_at_utc = Now()
-	    	/*FROM (
-	    		SELECT
-	    			referral_bonus_id,
-	    			split_part(referral_bonus_id, '_', 2) as applicant_id
-	    		FROM	
-	    			bp.referral_bonus_request
-	    			) b*/
 	    	WHERE referral_participants.applicant_id = %s;
 			''',(request[0],request[13]))
 		con_pg.commit()
