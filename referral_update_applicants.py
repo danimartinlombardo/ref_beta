@@ -22,12 +22,12 @@ try:
 	cur_pg.execute("""
 		UPDATE bp.referral_participants
 		SET
-			do_num = (data_update.do_num - a.do_strange_num),
+			do_num = (data_update.do_num - data_update.do_strange_num),
 			do_strange_num = data_update.do_strange_num,
     		state = (case
 					when data_update.dateline_dttm < ((Now() at time zone data_update.time_zone) - Interval '9 days') then 'obsolete'
 					when data_update.dateline_dttm < ((Now() at time zone data_update.time_zone) - Interval '7 days') then 'clear'
-					when (data_update.do_num - a.do_strange_num)  >= data_update.conditions_required_do then 'achieved'
+					when (data_update.do_num - data_update.do_strange_num)  >= data_update.conditions_required_do then 'achieved'
 					when data_update.dateline_dttm > (Now() at time zone data_update.time_zone) then 'on_time'
 					else 'expired'
 				end),
