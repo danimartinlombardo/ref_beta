@@ -4,7 +4,6 @@ import sys
 import requests
 import time
 from credentials import *
-from config_CO import *
 
 start_time = time.time()
 duplicated = 0
@@ -17,6 +16,24 @@ def slack_message (text):
 	slack = requests.request("POST", slack_url, data=slack_payload, headers=slack_headers)	
 
 os.system('clear')
+
+###LOAD CURRENT AGENCY CONFIGURATION
+print ('Fetching current agency configurations... ', end='')
+try:
+	con_pg = psycopg2.connect(dbname= 'maxi_new', host='sql.cabify.com', user=pg_user, password= pg_pass)
+	cur_pg = con_pg.cursor()
+	cur_pg.execute("""
+		SELECT
+			distinct on (agency_id) *
+		FROM
+			bp.referral_agency_config
+		ORDER BY agency_id, created_at DESC
+		""")
+except Exception as e:
+	slack_message(': <!channel> ERROR Unable to read current agency configurations: '+ str(e))
+	exit()
+agency_config = cur_pg.fetchall()
+agency_config_ids = [i[0] for i in agency_config]
 
 ###FETCH CURRENT PARTICIPANTS
 print ('Fetching existing participants... ', end='')
