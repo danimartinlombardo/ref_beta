@@ -45,7 +45,7 @@ try:
 	cur_rs.execute('''
 		SELECT
 			applicant.id_driver as applicant_id,
-			applicant2.ds_email as applicant_email,
+			lower(trim(applicant2.ds_email)) as applicant_email,
 			applicant.ds_name||' '||applicant.ds_surname as applicant_fullname,
 			j.id_journey as first_do_journey_id,
 			min_do.tm_start_local_at as first_do_local_dttm,
@@ -53,7 +53,7 @@ try:
 			r.id_region as first_do_region_id,
 			r.ds_time_zone as time_zone,
 			a.id_agency as first_do_agency_id,
-			ad.ds_driver_invitation_code as applicant_code,
+			lower(trim(ad.ds_driver_invitation_code)) as applicant_code,
 			godfather.id_user as godfather_id,
 			0 as do_num,
 			'on_time' as state,
@@ -79,7 +79,8 @@ try:
 			j.dt_start_local_at > date_trunc('day', DATEADD(day, -4, GETDATE()))
 			and j.dt_start_local_at < date_trunc('day', GETDATE())
 			and a.id_agency IN ('33f0e9373e981d2425d4da8d005a610b') /*CO*/
-		''',(week_num_limit,week_num_limit,required_do_num,amount_granted_godfather, amount_granted_applicant))
+                        and lower(trim(ad.ds_driver_invitation_code)) != lower(trim(applicant2.ds_email)) /*TO AVOIT AUTOREFERRALS*/
+                        ''',(week_num_limit,week_num_limit,required_do_num,amount_granted_godfather, amount_granted_applicant))
 except psycopg2.Error as e:
 	slack_message(': <!channel> ERROR Unable to read new participants: '+ str(e))
 	exit()

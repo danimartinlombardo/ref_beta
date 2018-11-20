@@ -87,13 +87,13 @@ try:
 		FROM
 			(SELECT
 				rp.godfather_id as external_id,
-				(case when rp.state='clear' then NULL else rp.applicant_fullname end ) as fullname_quote,
-				(case when rp.state='clear' then NULL else rp.applicant_email end) as email_quote,
-				(case when rp.state='clear' then NULL else ''''||(to_char(rp.dateline_dttm,'DD/MM/YYYY'))||'''' end) as dateline_quote,
-				(case when rp.state='clear' then NULL else (rp.conditions_required_do)::text end) as required_do_quote,
-				(case when rp.state='clear' then NULL else rp.state end) as state_quote,
-				(case when rp.state='clear' then NULL else (rp.do_num)::text end) as actual_do_quote,
-				(case when rp.state='clear' then NULL else ''''||(to_char(rp.updated_at_local,'DD/MM/YYYY HH:MI'))||'''' end) as updated_at_local_quote
+				(case when rp.state='clear' then '' else rp.applicant_fullname end ) as fullname_quote,
+				(case when rp.state='clear' then '' else rp.applicant_email end) as email_quote,
+				(case when rp.state='clear' then '' else ''''||(to_char(rp.dateline_dttm,'DD/MM/YYYY'))||'''' end) as dateline_quote,
+				(case when rp.state='clear' then '' else (rp.conditions_required_do)::text end) as required_do_quote,
+				(case when rp.state='clear' then '' else rp.state end) as state_quote,
+				(case when rp.state='clear' then '' else (rp.do_num)::text end) as actual_do_quote,
+				(case when rp.state='clear' then '' else ''''||(to_char(rp.updated_at_local,'DD/MM/YYYY HH:MI'))||'''' end) as updated_at_local_quote
 			FROM
 				bp.referral_participants rp
 			WHERE rp.state != 'obsolete'
