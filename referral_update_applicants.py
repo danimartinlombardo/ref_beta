@@ -3,7 +3,6 @@ import os, sys
 import requests
 import time
 from credentials import *
-from config_CO import *
 
 start_time = time.time()
 
