@@ -3,7 +3,6 @@ import os, sys
 import requests
 import time
 from credentials import *
-from config_CO import *
 
 start_time = time.time()
 
@@ -26,9 +25,9 @@ try:
 				rf.timezone,
 				rf.godfather_id as driver_id,
 				rf.conditions_amount_granted_godfather as amount,
-				%s as currency,
-				%s as currency_factor,
-				%s as tax_code,
+				rf.currency,
+				rf.currency_factor,
+				rf.tax_code,
 				date_trunc('day', Now()-Interval'1 day')::date as amount_dated_at,
 				'Referral program. Referrer: '||rf.godfather_id||'. Applicant: '||rf.applicant_id as notes,
 				'Programa de referidos: referido '||rf.applicant_fullname||' ('||rf.applicant_email||')' as explanation,
@@ -40,7 +39,7 @@ try:
 			WHERE
 				rf.state = 'achieved'
 				and bonus_request_id IS NULL
-		''', (currency,currency_factor, tax_code))
+		''')
 except psycopg2.Error as e:
 	print('Unable read bonus request data: '+ str(e))
 	slack_message(': <!channel> ERROR Unable read bonus request data: '+ str(e))
