@@ -79,7 +79,8 @@ try:
 			j.dt_start_local_at > date_trunc('day', DATEADD(day, -4, GETDATE()))
 			and j.dt_start_local_at < date_trunc('day', GETDATE())
 			and a.id_agency IN ('33f0e9373e981d2425d4da8d005a610b') /*CO*/
-            and lower(trim(ad.ds_driver_invitation_code)) != lower(trim(applicant2.ds_email)) /*TO AVOIT AUTOREFERRALS*/
+            		and lower(trim(ad.ds_driver_invitation_code)) != lower(trim(applicant2.ds_email)) /*TO AVOID AUTOREFERRALS*/
+		    	and godfather.fk_company_id != -1 /*TO AVOID REFERRED BY USERS NOT DRIVERS*/
         ''',(week_num_limit,week_num_limit,required_do_num,amount_granted_godfather, amount_granted_applicant))
 except psycopg2.Error as e:
 	slack_message(': <!channel> ERROR Unable to read new participants: '+ str(e))
