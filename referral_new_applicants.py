@@ -113,6 +113,8 @@ current_applicants_id=[i[0] for i in current_applicants]
 ###ADD NEW APPLICANTS
 for agency in agency_config:
 	print ('Fetching new valid applicants for agency '+agency[0]+': ', end='')
+	agency_new = 0
+	agency_duplicated= 0
 	try:
 		new_participants(agency[0],agency[1],agency[2],agency[3],agency[4],agency[5],agency[6],agency[7])
 	except:
@@ -123,6 +125,7 @@ for agency in agency_config:
 		if applicant[0] in current_applicants_id:
 			print (applicant[0] + ' Skipped: already on the program')
 			duplicated = duplicated + 1
+			agency_duplicated = agency_duplicated + 1
 			continue
 		try:
 			cur_pg.execute('''
@@ -131,14 +134,16 @@ for agency in agency_config:
 				(applicant[0], applicant[1], applicant[2], applicant[3], applicant[4], applicant[5], applicant[6], applicant[7], applicant[8], applicant[9], applicant[10], applicant[11], applicant[12], applicant[13], applicant[14], applicant[15], applicant[16], applicant[17], applicant[18], applicant[19], applicant[20], applicant[21], applicant[22], applicant[23], applicant[24]))
 			con_pg.commit()
 			new = new + 1
+			agency_new = agency_new + 1
 			print (applicant[0] + ' applicant included', end='')
-			# try:
-			# 	braze_payload = "{\n  \"api_key\": \""+braze_api+"\",\n  \"campaign_id\": \"3b3e9cbd-f984-b2ad-89a0-4c8a3e3a90a4\",\n  \"recipients\": [\n     {\n      \"external_user_id\": \""+applicant[10]+"\"\n     }\n   ]\n}"
-			# 	response = requests.request("POST", url = "https://rest.iad-01.braze.com/campaigns/trigger/send", data=braze_payload, headers=braze_headers)
-			# 	print ('. Braze response:'+response.text)
-			# except:
-			# 	print(': <!channel> ERROR Unable to send push to godfather (new applicants)')
+			try:
+				braze_payload = "{\n  \"api_key\": \""+braze_api+"\",\n  \"campaign_id\": \"3b3e9cbd-f984-b2ad-89a0-4c8a3e3a90a4\",\n  \"recipients\": [\n     {\n      \"external_user_id\": \""+applicant[10]+"\"\n     }\n   ]\n}"
+				response = requests.request("POST", url = "https://rest.iad-01.braze.com/campaigns/trigger/send", data=braze_payload, headers=braze_headers)
+				print ('. Braze response:'+response.text)
+			except:
+				print(': <!channel> ERROR Unable to send push to godfather (new applicants)')
 		except psycopg2.Error as e:
 			slack_message(': <!channel> ERROR Unable to insert new participants: '+ str(e))
 			exit()
+	slack_message(": Agency {0} data.\nNew applicants: {1}\nExcluded duplicated: {2}".format(agency[0], agency_new, agency_duplicated))
 slack_message(": Script loaded succesfully. Runtime: {0} seconds.\nExisting participants: {1}\nNew applicants: {2}\nExcluded duplicated: {3}".format((round(time.time() - start_time, 2)), len(current_applicants), new, duplicated))
