@@ -145,5 +145,5 @@ for agency in agency_config:
 		except psycopg2.Error as e:
 			slack_message(': <!channel> ERROR Unable to insert new participants: '+ str(e))
 			exit()
-	slack_message(": Agency {0} data.\nNew applicants: {1}\nExcluded duplicated: {2}".format(agency[0], agency_new, agency_duplicated))
+	slack_message(":\nAgency {0} data.\nNew applicants: {1}\nExcluded duplicated: {2}".format(agency[0], agency_new, agency_duplicated))
 slack_message(": Script loaded succesfully. Runtime: {0} seconds.\nExisting participants: {1}\nNew applicants: {2}\nExcluded duplicated: {3}".format((round(time.time() - start_time, 2)), len(current_applicants), new, duplicated))
