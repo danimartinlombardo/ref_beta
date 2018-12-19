@@ -165,10 +165,10 @@ try:
 	applicants_id_string = applicants_id_string+applicants_id[len(applicants_id)-1]+'''\"'''
 except Exception as e:
 	slack_message(': <!channel> ERROR Unable to prepare applicants string: '+ str(e))
-# try:
-amplitude_payload = "{\"name\":\"GRW_referrals_participants\",\"app_id\":174786,\"id_type\":\"BY_USER_ID\",\"ids\":[\n"+applicants_id_string+"],\"owner\":\"daniel.martin@cabify.com\",\"published\":true}"
-print(amplitude_payload)
-response = requests.request("POST", url = 'https://amplitude.com/api/3/cohorts/upload', headers=amplitude_headers, data=amplitude_payload, auth=(amplitude_apikey, amplitude_secretkey))
-print ('Amplitude response: '+response.text)
+try:
+	amplitude_payload = "{\"name\":\"GRW_referrals_participants\",\"app_id\":174786,\"id_type\":\"BY_USER_ID\",\"ids\":[\n"+applicants_id_string+"],\"owner\":\"daniel.martin@cabify.com\",\"published\":true}"
+	print(amplitude_payload)
+	response = requests.request("POST", url = 'https://amplitude.com/api/3/cohorts/upload', headers=amplitude_headers, data=amplitude_payload, auth=(amplitude_apikey, amplitude_secretkey))
+	print ('Amplitude response: '+response.text)
 except:
 	slack_message(': <!channel> ERROR Unable to update Amplitude cohort')
