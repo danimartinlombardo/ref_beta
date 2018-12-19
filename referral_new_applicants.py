@@ -160,7 +160,7 @@ try:
 			(select applicant_id from bp.referral_participants) p
 		''')
 	applicants_string_raw = cur_pg.fetchall()
-	applicants_string=[i[0] for i in applicants_string_raw]
+	applicants_string=applicants_string_raw[0]
 except Exception as e:
 	slack_message(': <!channel> ERROR Unable to prepare applicants string: '+ str(e))
 # try:
