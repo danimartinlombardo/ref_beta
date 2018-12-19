@@ -162,9 +162,9 @@ try:
 	applicants_string = cur_pg.fetchall()
 except Exception as e:
 	slack_message(': <!channel> ERROR Unable to prepare applicants string: '+ str(e))
-try:
-	amplitude_payload = "{\"name\":\"GRW_referrals_participants\",\"app_id\":174786,\"id_type\":\"BY_USER_ID\",\"ids\":[\n"+applicants_string+"],\"owner\":\"daniel.martin@cabify.com\",\"published\":true}"
-	response = requests.request("POST", url = 'https://amplitude.com/api/3/cohorts/upload', headers=amplitude_headers, data=amplitude_payload, auth=str(amplitude_auth))
-	print ('Amplitude response: '+response.text)
-except:
-	slack_message(': <!channel> ERROR Unable to update Amplitude cohort')
+# try:
+amplitude_payload = "{\"name\":\"GRW_referrals_participants\",\"app_id\":174786,\"id_type\":\"BY_USER_ID\",\"ids\":[\n"+applicants_string+"],\"owner\":\"daniel.martin@cabify.com\",\"published\":true}"
+response = requests.request("POST", url = 'https://amplitude.com/api/3/cohorts/upload', headers=amplitude_headers, data=amplitude_payload, auth=str(amplitude_auth))
+print ('Amplitude response: '+response.text)
+# except:
+# 	slack_message(': <!channel> ERROR Unable to update Amplitude cohort')
