@@ -167,4 +167,4 @@ try:
 	response = requests.request("POST", url = 'https://amplitude.com/api/3/cohorts/upload', headers=amplitude_headers, data=amplitude_payload, auth=amplitude_auth)
 	print ('Amplitude response: '+response.text)
 except:
-	slack_message(': <!channel> ERROR Unable to update Amplitude cohort')
+	slack_message(': <!channel> ERROR Unable to update Amplitude cohort'+response.text)
