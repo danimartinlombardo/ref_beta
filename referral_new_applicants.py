@@ -157,7 +157,7 @@ try:
 		SELECT
 			'\"'||string_agg (p.applicant_id, '\\",\n\"')||'\\"' as applicants
 		FROM
-			(select applicant_id from bp.referral_participants) p
+			(select applicant_id from bp.referral_participants limit 5) p
 		''')
 	applicants_string_raw = cur_pg.fetchall()
 	applicants_string=applicants_string_raw[0]
