@@ -161,6 +161,7 @@ try:
 		''')
 	applicants_string_raw = cur_pg.fetchall()
 	applicants_string=str(applicants_string_raw[0])
+	print(applicants_string_raw)
 	print(applicants_string)
 except Exception as e:
 	slack_message(': <!channel> ERROR Unable to prepare applicants string: '+ str(e))
