@@ -147,7 +147,6 @@ for agency in agency_config:
 			slack_message(': <!channel> ERROR Unable to insert new participants: '+ str(e))
 			exit()
 	slack_message(":\nAgency {0} data.\nNew applicants: {1}\nExcluded duplicated: {2}".format(agency[0], agency_new, agency_duplicated))
-slack_message(": Script loaded succesfully. Runtime: {0} seconds.\nExisting participants: {1}\nNew applicants: {2}\nExcluded duplicated: {3}".format((round(time.time() - start_time, 2)), len(current_applicants), new, duplicated))
 
 ###UPDATE COHORT IN AMPLITUDE
 print ('Updating cohort in Amplitude')
@@ -165,10 +164,7 @@ try:
 	applicants_id_string = applicants_id_string+applicants_id[len(applicants_id)-1]+'''\"'''
 except Exception as e:
 	slack_message(': <!channel> ERROR Unable to prepare applicants string: '+ str(e))
-try:
-	amplitude_payload = "{\"name\":\"GRW_referrals_participants\",\"app_id\":174786,\"id_type\":\"BY_USER_ID\",\"ids\":[\n"+applicants_id_string+"],\"owner\":\"daniel.martin@cabify.com\",\"published\":true}"
-	print(amplitude_payload)
-	response = requests.request("POST", url = 'https://amplitude.com/api/3/cohorts/upload', headers=amplitude_headers, data=amplitude_payload, auth=(amplitude_apikey, amplitude_secretkey))
-	print ('Amplitude response: '+response.text)
-except:
-	slack_message(': <!channel> ERROR Unable to update Amplitude cohort')
+amplitude_payload = "{\"name\":\"GRW_referrals_participants\",\"app_id\":174786,\"id_type\":\"BY_USER_ID\",\"ids\":[\n"+applicants_id_string+"],\"owner\":\"daniel.martin@cabify.com\",\"published\":true,\"existing_cohort_id\":\"jlqin13\"}"
+response = requests.request("POST", url = 'https://amplitude.com/api/3/cohorts/upload', headers=amplitude_headers, data=amplitude_payload, auth=(amplitude_apikey, amplitude_secretkey))
+print ('Amplitude response: '+response.text)
+slack_message(": Script loaded succesfully. Runtime: {0} seconds.\nExisting participants: {1}\nNew applicants: {2}\nExcluded duplicated: {3}".format((round(time.time() - start_time, 2)), len(current_applicants), new, duplicated))
