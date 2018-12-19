@@ -155,7 +155,7 @@ try:
 	cur_pg = con_pg.cursor()
 	cur_pg.execute('''
 		SELECT
-			'\"'||string_agg (p.applicant_id, '\",\n\"')||'\"' as applicants
+			'\"'||string_agg (p.applicant_id, '\\",\n\"')||'\\"' as applicants
 		FROM
 			(select applicant_id from bp.referral_participants) p
 		''')
