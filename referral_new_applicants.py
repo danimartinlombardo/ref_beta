@@ -9,7 +9,7 @@ start_time = time.time()
 duplicated = 0
 new = 0
 
-braze_headers = slack_headers = {'Content-Type': "application/json", 'Cache-Control': "no-cache"}
+braze_headers = slack_headers = amplitude_headers = {'Content-Type': "application/json", 'Cache-Control': "no-cache"}
 
 def slack_message (text):
 	slack_payload = "{\n\t\"text\": \""+os.path.basename(__file__)+text+"\"\n}"
@@ -147,3 +147,24 @@ for agency in agency_config:
 			exit()
 	slack_message(":\nAgency {0} data.\nNew applicants: {1}\nExcluded duplicated: {2}".format(agency[0], agency_new, agency_duplicated))
 slack_message(": Script loaded succesfully. Runtime: {0} seconds.\nExisting participants: {1}\nNew applicants: {2}\nExcluded duplicated: {3}".format((round(time.time() - start_time, 2)), len(current_applicants), new, duplicated))
+
+###UPDATE COHORT IN AMPLITUDE
+print ('Updating cohort in Amplitude')
+try:
+	con_pg = psycopg2.connect(dbname= 'maxi_new', host='sql.cabify.com', user=pg_user, password= pg_pass)
+	cur_pg = con_pg.cursor()
+	cur_pg.execute('''
+		SELECT
+			'\"'||string_agg (p.applicant_id, '\",\n\"')||'\"' as applicants
+		FROM
+			(select applicant_id from bp.referral_participants) p
+		''')
+	applicants_string = cur_pg.fetchall()
+except Exception as e:
+	slack_message(': <!channel> ERROR Unable to prepare applicants string: '+ str(e))
+try:
+	amplitude_payload = "{\"name\":\"GRW_referrals_participants\",\"app_id\":174786,\"id_type\":\"BY_USER_ID\",\"ids\":[\n"+applicants_string+"],\"owner\":\"daniel.martin@cabify.com\",\"published\":true}"
+	response = requests.request("POST", url = 'https://amplitude.com/api/3/cohorts/upload', headers=amplitude_headers, data=amplitude_payload, auth=amplitude_auth)
+	print ('Amplitude response: '+response.text)
+except:
+	slack_message(': <!channel> ERROR Unable to update Amplitude cohort')
