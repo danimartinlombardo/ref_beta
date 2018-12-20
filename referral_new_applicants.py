@@ -47,7 +47,9 @@ def new_participants (agency_id, required_do_num, week_num_limit, amount_granted
 				%s as currency, /* aplicant[22] */
 				%s as currency_factor, /* aplicant[23] */
 				%s as tax_code, /* aplicant[24] */
-				applicant.id_driver||godfather.id_user as combo /* NOT INSERTED */
+				godfather.ds_name||' '||godfather.ds_surname as godfather_fullname, /* aplicant[25] */
+				applicant.id_driver||godfather.id_user as combo /* NOT INSERTED */,
+
 			FROM
 				datawarehouse.ops_fac_journey_min_do_driver min_do
 				inner join datawarehouse.ops_fac_journey j on min_do.sk_journey = j.sk_journey
@@ -131,8 +133,8 @@ for agency in agency_config:
 		try:
 			cur_pg.execute('''
 				INSERT INTO bp.referral_participants
-				VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-				(applicant[0], applicant[1], applicant[2], applicant[3], applicant[4], applicant[5], applicant[6], applicant[7], applicant[8], applicant[9], applicant[10], applicant[11], applicant[12], applicant[13], applicant[14], applicant[15], applicant[16], applicant[17], applicant[18], applicant[19], applicant[20], applicant[21], applicant[22], applicant[23], applicant[24]))
+				VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+				(applicant[0], applicant[1], applicant[2], applicant[3], applicant[4], applicant[5], applicant[6], applicant[7], applicant[8], applicant[9], applicant[10], applicant[11], applicant[12], applicant[13], applicant[14], applicant[15], applicant[16], applicant[17], applicant[18], applicant[19], applicant[20], applicant[21], applicant[22], applicant[23], applicant[24], applicant[25]))
 			con_pg.commit()
 			new = new + 1
 			agency_new = agency_new + 1
