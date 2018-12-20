@@ -126,16 +126,16 @@ try:
 	cur_pg.execute("""	
 		SELECT
 			rp.applicant_id as external_id,
-			(case when rp.state='clear' then '' else rp.godfather_fullname end) as referrals_godfather_name,
-			(case when rp.state='clear' then '' else rp.applicant_code end) as referrals_godfather_email,
-			(case when rp.state='clear' then '' else to_char(rp.dateline_dttm,'DD/MM/YYYY') end) as referrals_applicant_dateline,
-			(case when rp.state='clear' then '' else (rp.conditions_required_do)::text end) as referrals_applicant_required_do,
-			(case when rp.state='clear' then '' else rp.state end) as referrals_applicant_state,
-			(case when rp.state='clear' then '' else (rp.do_num)::text end) as referrals_applicant_actual_do,
-			(case when rp.state='clear' then '' else (to_char(rp.updated_at_local,'DD/MM/YYYY HH:MI')) end) as referrals_applicant_updated_at_local,
-			(case when rp.state='clear' then '' else (rp.conditions_week_num)::text end) as referrals_applicant_week_num,
-			(case when rp.state='clear' then '' else (rp.conditions_amount_granted_godfather)::text end) as referrals_applicant_amount_godfather,
-			(case when rp.state='clear' then '' else (rp.conditions_amount_granted_applicant)::text end) as referrals_applicant_amount
+			'"'||(case when rp.state='clear' then '' else rp.godfather_fullname end)||'"' as referrals_godfather_name,
+			'"'||(case when rp.state='clear' then '' else rp.applicant_code end)||'"' as referrals_godfather_email,
+			'"'||(case when rp.state='clear' then '' else to_char(rp.dateline_dttm,'DD/MM/YYYY') end)||'"' as referrals_applicant_dateline,
+			'"'||(case when rp.state='clear' then '' else (rp.conditions_required_do)::text end)||'"' as referrals_applicant_required_do,
+			'"'||(case when rp.state='clear' then '' else rp.state end)||'"' as referrals_applicant_state,
+			'"'||(case when rp.state='clear' then '' else (rp.do_num)::text end)||'"' as referrals_applicant_actual_do,
+			'"'||(case when rp.state='clear' then '' else (to_char(rp.updated_at_local,'DD/MM/YYYY HH:MI')) end)||'"' as referrals_applicant_updated_at_local,
+			'"'||(case when rp.state='clear' then '' else (rp.conditions_week_num)::text end)||'"' as referrals_applicant_week_num,
+			'"'||(case when rp.state='clear' then '' else (rp.conditions_amount_granted_godfather)::text end)||'"' as referrals_applicant_amount_godfather,
+			'"'||(case when rp.state='clear' then '' else (rp.conditions_amount_granted_applicant)::text end)||'"' as referrals_applicant_amount
 		FROM
 			bp.referral_participants rp
 		WHERE rp.state != 'obsolete'
