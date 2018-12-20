@@ -125,21 +125,35 @@ for godfather in braze_arrays:
 try:
 	cur_pg.execute("""	
 		SELECT
-			rp.applicant_id as external_id,
-			'"'||(case when rp.state='clear' then '' else rp.godfather_fullname end)||'"' as referrals_godfather_name,
-			'"'||(case when rp.state='clear' then '' else rp.applicant_code end)||'"' as referrals_godfather_email,
-			'"'||(case when rp.state='clear' then '' else to_char(rp.dateline_dttm,'DD/MM/YYYY') end)||'"' as referrals_applicant_dateline,
-			'"'||(case when rp.state='clear' then '' else (rp.conditions_required_do)::text end)||'"' as referrals_applicant_required_do,
-			'"'||(case when rp.state='clear' then '' else rp.state end)||'"' as referrals_applicant_state,
-			'"'||(case when rp.state='clear' then '' else (rp.do_num)::text end)||'"' as referrals_applicant_actual_do,
-			'"'||(case when rp.state='clear' then '' else (to_char(rp.updated_at_local,'DD/MM/YYYY HH:MI')) end)||'"' as referrals_applicant_updated_at_local,
-			'"'||(case when rp.state='clear' then '' else (rp.conditions_week_num)::text end)||'"' as referrals_applicant_week_num,
-			'"'||(case when rp.state='clear' then '' else (rp.conditions_amount_granted_godfather)::text end)||'"' as referrals_applicant_amount_godfather,
-			'"'||(case when rp.state='clear' then '' else (rp.conditions_amount_granted_applicant)::text end)||'"' as referrals_applicant_amount
+			q.external_id,
+			'"'||string_agg (q.fullname_quote, ', ')||'"' as referrals_godfather_name,
+			'"'||string_agg (q.email_quote, ', ')||'"' as referrals_godfather_email,
+			'"'||string_agg (q.dateline_quote, ', ')||'"' as referrals_applicant_dateline,
+			'"'||string_agg (q.required_do_quote, ', ')||'"' as referrals_applicant_required_do,
+			'"'||string_agg (q.state_quote, ', ')||'"' as referrals_applicant_state,
+			'"'||string_agg (q.actual_do_quote, ', ')||'"' as referrals_applicant_actual_do,
+			'"'||string_agg (q.updated_at_local_quote, ', ')||'"' as referrals_applicant_updated_at_local,
+			'"'||string_agg (q.week_num_quote, ', ')||'"' as referrals_applicant_week_num,
+			'"'||string_agg (q.amount_godfather_quote, ', ')||'"' as referrals_applicant_amount_godfather,
+			'"'||string_agg (q.amount_applicant_quote, ', ')||'"' as referrals_applicant_amount
 		FROM
-			bp.referral_participants rp
-		WHERE rp.state != 'obsolete'
-		ORDER BY rp.godfather_id, rp.created_at_utc, rp.applicant_email;
+			(SELECT
+				rp.applicant_id as external_id,
+				(case when rp.state='clear' then '' else rp.godfather_fullname end ) as fullname_quote,
+				(case when rp.state='clear' then '' else rp.applicant_code end) as email_quote,
+				(case when rp.state='clear' then '' else ''''||(to_char(rp.dateline_dttm,'DD/MM/YYYY'))||'''' end) as dateline_quote,
+				(case when rp.state='clear' then '' else (rp.conditions_required_do)::text end) as required_do_quote,
+				(case when rp.state='clear' then '' else rp.state end) as state_quote,
+				(case when rp.state='clear' then '' else (rp.do_num)::text end) as actual_do_quote,
+				(case when rp.state='clear' then '' else ''''||(to_char(rp.updated_at_local,'DD/MM/YYYY HH:MI'))||'''' end) as updated_at_local_quote,
+				(case when rp.state='clear' then '' else (rp.conditions_week_num)::text end) as week_num_quote,
+				(case when rp.state='clear' then '' else (rp.conditions_amount_granted_godfather)::text end) as amount_godfather_quote,
+				(case when rp.state='clear' then '' else (rp.conditions_amount_granted_applicant)::text end) as amount_applicant_quote
+			FROM
+				bp.referral_participants rp
+			WHERE rp.state != 'obsolete'
+			ORDER BY rp.applicant_id, rp.created_at_utc, rp.applicant_email) q
+		GROUP BY 1;
 	""")
 except psycopg2.Error as e:
 	slack_message(': <!channel> ERROR Unable to create Braze arrays for applicants: '+ str(e))
