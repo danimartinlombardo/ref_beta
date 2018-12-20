@@ -56,7 +56,7 @@ try:
 				'Programa de referidos: referente '||rf.applicant_fullname||' ('||rf.applicant_email||')' as explanation,
 				'referral' as category,
 				Now() as created_at_utc,
-				rf.applicant_id as applicant_id
+				rf.applicant_id as applicant_id,
 				'applicant' as type
 			FROM
 				bp.referral_participants rf
