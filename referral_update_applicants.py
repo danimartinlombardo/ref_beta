@@ -167,5 +167,5 @@ for applicant in braze_applicants:
 		print (applicant[0] + ' Braze attributes updated. Response '+response.text)
 	except:
 		slack_message(': <!channel> ERROR Braze attributes update error on applicant_id '+applicant[0])
-		print(': <!channel> ERROR Braze attributes update error on applicant_id '+applicant[0])
+		print('ERROR Braze attributes update error on applicant_id '+applicant[0])
 slack_message(": Script loaded succesfully. Runtime: %s seconds" % round(time.time() - start_time, 2))
