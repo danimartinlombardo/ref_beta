@@ -33,7 +33,8 @@ try:
 				'Programa de referidos: referido '||rf.applicant_fullname||' ('||rf.applicant_email||')' as explanation,
 				'referral' as category,
 				Now() as created_at_utc,
-				rf.applicant_id as applicant_id
+				rf.applicant_id as applicant_id,
+				'godfather' as type
 			FROM
 				bp.referral_participants rf
 			WHERE
@@ -56,6 +57,7 @@ try:
 				'referral' as category,
 				Now() as created_at_utc,
 				rf.applicant_id as applicant_id
+				'applicant' as type
 			FROM
 				bp.referral_participants rf
 			WHERE
@@ -81,9 +83,14 @@ for request in b_requests:
 		con_pg_google.commit()
 		print ('Bonus requests data inserted. ', end='')	
 		try:
-			braze_payload = "{\n  \"api_key\": \""+braze_api+"\",\n  \"campaign_id\": \"183d9996-4ca0-4987-8cae-f6a344df57b9\",\n  \"recipients\": [\n     {\n      \"external_user_id\": \""+request[3]+"\"\n     }\n   ]\n}"
-			response = requests.post(url = "https://rest.iad-01.braze.com/campaigns/trigger/send", data=braze_payload, headers=braze_headers)
-			print ('Braze response:'+response.text)
+			if request[14] = 'godfather':
+				braze_payload = "{\n  \"api_key\": \""+braze_api+"\",\n  \"campaign_id\": \"183d9996-4ca0-4987-8cae-f6a344df57b9\",\n  \"recipients\": [\n     {\n      \"external_user_id\": \""+request[3]+"\"\n     }\n   ]\n}"
+				response = requests.post(url = "https://rest.iad-01.braze.com/campaigns/trigger/send", data=braze_payload, headers=braze_headers)
+				print ('Braze response:'+response.text)
+			else request[14] = 'applicant':
+				braze_payload = "{\n  \"api_key\": \""+braze_api+"\",\n  \"campaign_id\": \"e65ae958-789b-f2ce-cec0-bca0694489be\",\n  \"recipients\": [\n     {\n      \"external_user_id\": \""+request[3]+"\"\n     }\n   ]\n}"
+				response = requests.post(url = "https://rest.iad-01.braze.com/campaigns/trigger/send", data=braze_payload, headers=braze_headers)
+				print ('Braze response:'+response.text)
 		except:
 			print('Braze error')
 			slack_message(': <!channel> ERROR Bonus granted comms not working')
