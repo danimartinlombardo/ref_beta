@@ -160,8 +160,8 @@ except psycopg2.Error as e:
 	slack_message(': <!channel> ERROR Unable to create Braze arrays for applicants: '+ str(e))
 	print(': <!channel> ERROR Unable to create Braze arrays for applicants: '+ str(e))
 	exit()
-braze_applicants = cur_pg.fetchall()
-print (braze_applicants)
+braze_applicants_raw = cur_pg.fetchall()
+braze_applicants = braze_applicants_raw.encode("utf-8")
 for applicant in braze_applicants:	
 	print (applicant)
 	print(applicant[0])
