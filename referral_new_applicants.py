@@ -48,8 +48,7 @@ def new_participants (agency_id, required_do_num, week_num_limit, amount_granted
 				%s as currency_factor, /* aplicant[23] */
 				%s as tax_code, /* aplicant[24] */
 				godfather.ds_name||' '||godfather.ds_surname as godfather_fullname, /* aplicant[25] */
-				applicant.id_driver||godfather.id_user as combo /* NOT INSERTED */,
-
+				applicant.id_driver||godfather.id_user as combo /* NOT INSERTED */
 			FROM
 				datawarehouse.ops_fac_journey_min_do_driver min_do
 				inner join datawarehouse.ops_fac_journey j on min_do.sk_journey = j.sk_journey
