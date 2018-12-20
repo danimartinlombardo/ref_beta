@@ -162,9 +162,9 @@ except psycopg2.Error as e:
 	exit()
 braze_applicants = cur_pg.fetchall()
 for applicant in braze_applicants:	
+	print (applicant)
+	print(applicant[0])
 	try:
-		print (applicant)
-		print(applicant[0])
 		braze_payload = "{\n  \"api_key\": \""+braze_api+"\",\n  \"attributes\": [ \n \t{\n \t  \"external_id\":\""+applicant[0]+"\",\n      \"referrals_gf_name_str\": "+applicant[1]+",\n      \"referrals_gf_email_str\": "+applicant[2]+",\n      \"referrals_gf_dateline_str\": "+applicant[3]+",\n      \"referrals_gf_required_do_str\": "+applicant[4]+",\n      \"referrals_gf_state_str\": "+applicant[5]+",\n      \"referrals_gf_actual_do_str\": "+applicant[6]+",\n      \"referrals_gf_updated_at_local_str\": "+applicant[7]+",\n      \"referrals_gf_conditions_week_num_str\": "+applicant[8]+",\n      \"referrals_gf_conditions_godfather_amount_str\": "+applicant[9]+",\n      \"referrals_gf_conditions_applicant_amount_str\": "+applicant[10]+"\n    }\n   ]\n}"
 		response = requests.request("POST", url = "https://rest.iad-01.braze.com/users/track", data=braze_payload, headers=braze_headers)
 		print (applicant[0] + ' Braze attributes updated. Response '+response.text)
