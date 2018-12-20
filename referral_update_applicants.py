@@ -161,6 +161,7 @@ except psycopg2.Error as e:
 	print(': <!channel> ERROR Unable to create Braze arrays for applicants: '+ str(e))
 	exit()
 braze_applicants = cur_pg.fetchall()
+print braze_applicants
 for applicant in braze_applicants:	
 	print (applicant)
 	print(applicant[0])
