@@ -83,7 +83,7 @@ for request in b_requests:
 		con_pg_google.commit()
 		print ('Bonus requests data inserted. ', end='')	
 		try:
-			if request[14] = 'godfather':
+			if request[14] == 'godfather':
 				braze_payload = "{\n  \"api_key\": \""+braze_api+"\",\n  \"campaign_id\": \"183d9996-4ca0-4987-8cae-f6a344df57b9\",\n  \"recipients\": [\n     {\n      \"external_user_id\": \""+request[3]+"\"\n     }\n   ]\n}"
 				response = requests.post(url = "https://rest.iad-01.braze.com/campaigns/trigger/send", data=braze_payload, headers=braze_headers)
 				print ('Braze response:'+response.text)
