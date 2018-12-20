@@ -39,6 +39,29 @@ try:
 			WHERE
 				rf.state = 'achieved'
 				and bonus_request_id IS NULL
+				and rf.conditions_amount_granted_godfather >0
+			UNION ALL
+			SELECT
+				rf.godfather_id||'_'||rf.applicant_id||'_referred' as referral_bonus_id,
+				rf.first_do_region_id as region_id,
+				rf.timezone,
+				rf.applicant_id as driver_id,
+				rf.conditions_amount_granted_applicant as amount,
+				rf.currency,
+				rf.currency_factor,
+				rf.tax_code,
+				date_trunc('day', Now()-Interval'1 day')::date as amount_dated_at,
+				'Referral program. Referrer: '||rf.godfather_id||'. Applicant: '||rf.applicant_id as notes,
+				'Programa de referidos: referente '||rf.applicant_fullname||' ('||rf.applicant_email||')' as explanation,
+				'referral' as category,
+				Now() as created_at_utc,
+				rf.applicant_id as applicant_id
+			FROM
+				bp.referral_participants rf
+			WHERE
+				rf.state = 'achieved'
+				and bonus_request_id IS NULL
+				and rf.conditions_amount_granted_applicant >0;
 		''')
 except psycopg2.Error as e:
 	print('Unable read bonus request data: '+ str(e))
@@ -77,7 +100,7 @@ for request in b_requests:
 				bonus_request_id = %s,
 	    		updated_at_utc = Now()
 	    	WHERE referral_participants.applicant_id = %s;
-			''',(request[0],request[13]))
+			''',(request[0],request[13])) #BE AWARE: WHERE BOTH APPLICANT AND GODFATHER GET A BONUS, ONLY ONE ID WILL BE PASTED ON THIS FIELD
 		con_pg.commit()
 		print ('Bonus id updated.')
 	except psycopg2.Error as e:
