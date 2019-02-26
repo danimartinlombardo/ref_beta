@@ -27,7 +27,7 @@ def new_participants (agency_id, required_do_num, week_num_limit, amount_granted
 				applicant.ds_name||' '||applicant.ds_surname as applicant_fullname, /* aplicant[2] */
 				j.id_journey as first_do_journey_id, /* aplicant[3] */
 				min_do.tm_start_local_at as first_do_local_dttm, /* aplicant[4] */
-				DATEADD(day, 1, (DATEADD(week, %s, min_do.tm_start_local_at)) as dateline_dttm, /* aplicant[5] */
+				DATEADD(day, 1, (DATEADD(week, %s, min_do.tm_start_local_at))) as dateline_dttm, /* aplicant[5] */
 				r.id_region as first_do_region_id, /* aplicant[6] */
 				r.ds_time_zone as time_zone, /* aplicant[7] */
 				a.id_agency as first_do_agency_id, /* aplicant[8] */
