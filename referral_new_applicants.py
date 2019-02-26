@@ -59,7 +59,7 @@ def new_participants (agency_id, required_do_num, week_num_limit, amount_granted
 				inner join datawarehouse.lgt_fac_applicantdetail ad on applicant.fk_applicant_id = ad.sk_applicantdetail
 				inner join datawarehouse.ops_dim_user godfather on lower(trim(ad.ds_driver_invitation_code)) = lower(trim(godfather.ds_email))
 			WHERE
-				j.dt_start_local_at > date_trunc('day', DATEADD(day, -15, GETDATE()))
+				j.dt_start_local_at > date_trunc('day', DATEADD(day, -5, GETDATE()))
 				and j.dt_start_local_at < date_trunc('day', GETDATE())
 				and a.id_agency IN (%s)
 	            and lower(trim(ad.ds_driver_invitation_code)) != lower(trim(applicant2.ds_email)) /*TO AVOID AUTOREFERRALS*/
