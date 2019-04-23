@@ -118,8 +118,8 @@ for godfather in braze_arrays:
 		response = requests.request("POST", url = "https://rest.iad-01.braze.com/users/track", data=braze_payload, headers=braze_headers)
 		print (godfather[0] + ' Braze attributes updated. Response '+response.text)
 	except:
-		slack_message(': <!channel> ERROR Braze attributes update error')
-		print(': <!channel> ERROR Braze attributes update error')
+		slack_message(': ERROR Braze attributes update error on GODFATHER_id '+godfather[0])
+		print('ERROR Braze attributes update error on GODFATHER_id '+godfather[0])
 
 ###UPDATE APPLICANTS: BRAZE (APPLICANTS)
 try:
