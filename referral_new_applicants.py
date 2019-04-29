@@ -104,6 +104,8 @@ try:
 			distinct (applicant_id)
 		FROM
 			bp.referral_participants
+		WHERE
+			state != 'obsolete'
 		''')
 except Exception as e:
 	slack_message(': <!channel> ERROR Unable to read current participants: '+ str(e))
