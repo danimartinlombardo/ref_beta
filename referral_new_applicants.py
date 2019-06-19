@@ -16,7 +16,7 @@ def slack_message (text):
 	slack_payload = "{\n\t\"text\": \""+os.path.basename(__file__)+text+"\"\n}"
 	slack = requests.request("POST", slack_url, data=slack_payload, headers=slack_headers)
 
-def new_participants (agency_id, required_do_num, week_num_limit, amount_granted_godfather, amount_granted_applicant, currency, currency_factor, tax_code):
+def new_participants (region_id, required_do_num, week_num_limit, amount_granted_godfather, amount_granted_applicant, currency, currency_factor, tax_code):
 	try:
 		con_rs=psycopg2.connect(dbname= 'dwh', host='cabify-datawarehouse.cxdpjwjwbg9i.eu-west-1.redshift.amazonaws.com', port= '5439', user= rs_user, password= rs_pass)
 		cur_rs= con_rs.cursor()
@@ -61,36 +61,36 @@ def new_participants (agency_id, required_do_num, week_num_limit, amount_granted
 			WHERE
 				j.dt_start_local_at > date_trunc('day', DATEADD(day, -5, GETDATE()))
 				and j.dt_start_local_at < date_trunc('day', GETDATE())
-				and a.id_agency IN (%s)
+				and r.id_region IN (%s)
 	            and lower(trim(ad.ds_driver_invitation_code)) != lower(trim(applicant2.ds_email)) /*TO AVOID AUTOREFERRALS*/
 	            and godfather.fk_company_id != -1 /*TO AVOID REFERRED BY USERS NOT DRIVERS*/
-	        ''',(week_num_limit, week_num_limit, required_do_num,amount_granted_godfather,amount_granted_applicant, currency, currency_factor, tax_code, agency_id))
+	        ''',(week_num_limit, week_num_limit, required_do_num,amount_granted_godfather,amount_granted_applicant, currency, currency_factor, tax_code, region_id))
 		global valid_applicants
 		valid_applicants = cur_rs.fetchall()
 		print (len(valid_applicants))
 	except psycopg2.Error as e:
-		slack_message(': <!channel> ERROR Unable to read new participants for agency '+agency_id+': '+ str(e))
+		slack_message(': <!channel> ERROR Unable to read new participants for region '+region_id+': '+ str(e))
 		exit()
 
 os.system('clear')
 
-###LOAD CURRENT AGENCY CONFIGURATION
-print ('Fetching current agency configurations... ', end='')
+###LOAD CURRENT REGION CONFIGURATION
+print ('Fetching current region configurations... ', end='')
 try:
 	con_pg = psycopg2.connect(dbname= 'maxi_new', host='sql.cabify.com', user=pg_user, password= pg_pass)
 	cur_pg = con_pg.cursor()
 	cur_pg.execute("""
 		SELECT
-			distinct on (agency_id) *
+			distinct on (region_id) *
 		FROM
-			bp.referral_agency_config
-		ORDER BY agency_id, created_at DESC
+			bp.referral_region_config
+		ORDER BY region_id, created_at DESC
 		""")
 except Exception as e:
-	slack_message(': <!channel> ERROR Unable to read current agency configurations: '+ str(e))
+	slack_message(': <!channel> ERROR Unable to read current region configurations: '+ str(e))
 	exit()
-agency_config = cur_pg.fetchall()
-print (len(agency_config))
+region_config = cur_pg.fetchall()
+print (len(region_config))
 
 
 
@@ -133,21 +133,21 @@ print (len(active_applicants))
 active_applicants_id=[i[0] for i in active_applicants]
 
 ###ADD NEW APPLICANTS
-for agency in agency_config:
-	print ('Fetching new valid applicants for agency '+agency[0]+': ', end='')
-	agency_new = 0
-	agency_duplicated= 0
+for region in region_config:
+	print ('Fetching new valid applicants for region '+region[0]+': ', end='')
+	region_new = 0
+	region_duplicated= 0
 	try:
-		new_participants(agency[0],agency[1],agency[2],agency[3],agency[4],agency[5],agency[6],agency[7])
+		new_participants(region[0],region[1],region[2],region[3],region[4],region[5],region[6],region[7])
 	except:
-		slack_message(': <!channel> ERROR Unable to read new participants for agency '+agency_id)
-		print('ERROR Unable to read new participants for agency '+agency_id)
+		slack_message(': <!channel> ERROR Unable to read new participants for region '+region_id)
+		print('ERROR Unable to read new participants for region '+region_id)
 		continue
 	for applicant in valid_applicants:
 		if applicant[0] in current_applicants_id:
 			print (applicant[0] + ' Skipped: already on the program')
 			duplicated = duplicated + 1
-			agency_duplicated = agency_duplicated + 1
+			region_duplicated = region_duplicated + 1
 			continue
 		try:
 			cur_pg.execute('''
@@ -156,7 +156,7 @@ for agency in agency_config:
 				(applicant[0], applicant[1], applicant[2], applicant[3], applicant[4], applicant[5], applicant[6], applicant[7], applicant[8], applicant[9], applicant[10], applicant[11], applicant[12], applicant[13], applicant[14], applicant[15], applicant[16], applicant[17], applicant[18], applicant[19], applicant[20], applicant[21], applicant[22], applicant[23], applicant[24], applicant[25]))
 			con_pg.commit()
 			new = new + 1
-			agency_new = agency_new + 1
+			region_new = region_new + 1
 			print (applicant[0] + ' applicant included', end='')
 			try:
 				braze_payload = "{\n  \"api_key\": \""+braze_api+"\",\n  \"campaign_id\": \"3b3e9cbd-f984-b2ad-89a0-4c8a3e3a90a4\",\n  \"recipients\": [\n     {\n      \"external_user_id\": \""+applicant[10]+"\"\n     }\n   ]\n}"
@@ -167,7 +167,7 @@ for agency in agency_config:
 		except psycopg2.Error as e:
 			slack_message(': <!channel> ERROR Unable to insert new participants: '+ str(e))
 			exit()
-	slack_message(":\nAgency {0} data.\nNew applicants: {1}\nExcluded duplicated: {2}".format(agency[0], agency_new, agency_duplicated))
+	slack_message(":\nRegion {0} data.\nNew applicants: {1}\nExcluded duplicated: {2}".format(region[0], region_new, region_duplicated))
 
 ###UPDATE COHORT IN AMPLITUDE
 print ('Updating cohort in Amplitude')
