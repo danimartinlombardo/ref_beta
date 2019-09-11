@@ -119,7 +119,7 @@ for godfather in braze_arrays:
 		print (godfather[0] + ' Braze attributes updated. Response '+response.text)
 	except:
 		slack_message(': ERROR Braze attributes update error on GODFATHER_id '+godfather[0])
-		print('ERROR Braze attributes update error on GODFATHER_id '+godfather[0])
+		print('ERROR Braze attributes update error on GODFATHER_id '+godfather[0]+'. Error: '+response.text)
 
 ###UPDATE APPLICANTS: BRAZE (APPLICANTS)
 try:
