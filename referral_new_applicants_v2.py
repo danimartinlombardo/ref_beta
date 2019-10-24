@@ -1,4 +1,5 @@
 import psycopg2
+import pymysql
 import os
 import sys
 import requests
@@ -79,7 +80,7 @@ os.system('clear')
 ###LOAD CURRENT REGION CONFIGURATION
 print ('Fetching current region configurations... ', end='')
 try:
-	con_ms = psycopg2.connect(dbname= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
+	con_ms = pymysql.connect(dbname= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
 	cur_ms = con_ms.cursor()
 	cur_ms.execute("""
 		SELECT
@@ -99,7 +100,7 @@ print (len(region_config))
 ###FETCH ALL TIME PARTICIPANTS
 print ('Fetching all time participants... ', end='')
 try:
-	con_ms = psycopg2.connect(dbname= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
+	con_ms = pymysql.connect(dbname= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
 	cur_ms = con_ms.cursor()
 	cur_ms.execute('''
 		SELECT
@@ -117,7 +118,7 @@ current_applicants_id=[i[0] for i in current_applicants]
 ###FETCH CURRENT ACTIVE APPLICANTS
 print ('Fetching active participants... ', end='')
 try:
-	con_ms = psycopg2.connect(dbname= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
+	con_ms = pymysql.connect(dbname= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
 	cur_ms = con_ms.cursor()
 	cur_ms.execute('''
 		SELECT
@@ -166,7 +167,7 @@ for region in region_config:
 				print ('. Braze response:'+response.text)
 			except:
 				print(': <!channel> ERROR Unable to send push to godfather (new applicants)')
-		except psycopg2.Error as e:
+		except pymysql.Error as e:
 			slack_message(': <!channel> ERROR Unable to insert new participants: '+ str(e))
 			exit()
 	slack_message(":\nRegion {0} data.\nNew applicants: {1}\nExcluded duplicated: {2}".format(region[0], region_new, region_duplicated))
@@ -174,7 +175,7 @@ for region in region_config:
 ###UPDATE COHORT IN AMPLITUDE
 print ('Updating cohort in Amplitude')
 try:
-	con_ms = psycopg2.connect(dbname= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
+	con_ms = pymysql.connect(dbname= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
 	cur_ms = con_ms.cursor()
 	cur_ms.execute('''
 		SELECT distinct(applicant_id) from referral_participants
