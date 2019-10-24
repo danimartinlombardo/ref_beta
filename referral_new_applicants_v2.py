@@ -80,7 +80,7 @@ os.system('clear')
 ###LOAD CURRENT REGION CONFIGURATION
 print ('Fetching current region configurations... ', end='')
 try:
-	con_ms = psycopg2.connect(dbname= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
+	con_ms = pymysql.connect(db= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
 	cur_ms = con_ms.cursor()
 	cur_ms.execute("""
 		SELECT
@@ -97,10 +97,11 @@ except Exception as e:
 region_config = cur_ms.fetchall()
 print (len(region_config))
 
+
 ###FETCH ALL TIME PARTICIPANTS
 print ('Fetching all time participants... ', end='')
 try:
-	con_ms = psycopg2.connect(dbname= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
+	con_ms = pymysql.connect(db= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
 	cur_ms = con_ms.cursor()
 	cur_ms.execute('''
 		SELECT
@@ -118,7 +119,7 @@ current_applicants_id=[i[0] for i in current_applicants]
 ###FETCH CURRENT ACTIVE APPLICANTS
 print ('Fetching active participants... ', end='')
 try:
-	con_ms = psycopg2.connect(dbname= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
+	con_ms = pymysql.connect(db= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
 	cur_ms = con_ms.cursor()
 	cur_ms.execute('''
 		SELECT
@@ -138,6 +139,8 @@ active_applicants_id=[i[0] for i in active_applicants]
 ###ADD NEW APPLICANTS
 for region in region_config:
 	print ('Fetching new valid applicants for region '+region[0]+': ', end='')
+	print(region)
+	print(type(region))
 	region_new = 0
 	region_duplicated= 0
 	try:
@@ -175,7 +178,7 @@ for region in region_config:
 ###UPDATE COHORT IN AMPLITUDE
 print ('Updating cohort in Amplitude')
 try:
-	con_ms = psycopg2.connect(dbname= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
+	con_ms = pymysql.connect(db= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
 	cur_ms = con_ms.cursor()
 	cur_ms.execute('''
 		SELECT distinct(applicant_id) from referral_participants
