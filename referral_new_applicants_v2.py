@@ -97,7 +97,6 @@ except Exception as e:
 region_config = cur_ms.fetchall()
 print (len(region_config))
 
-
 ###FETCH ALL TIME PARTICIPANTS
 print ('Fetching all time participants... ', end='')
 try:
@@ -139,8 +138,6 @@ active_applicants_id=[i[0] for i in active_applicants]
 ###ADD NEW APPLICANTS
 for region in region_config:
 	print ('Fetching new valid applicants for region '+region[0]+': ', end='')
-	print(region)
-	print(type(region))
 	region_new = 0
 	region_duplicated= 0
 	try:
