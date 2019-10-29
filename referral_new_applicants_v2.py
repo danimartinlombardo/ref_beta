@@ -83,13 +83,14 @@ try:
 	con_ms = pymysql.connect(db= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
 	cur_ms = con_ms.cursor()
 	cur_ms.execute("""
-		SELECT
-			DISTINCT(region_id)
-		FROM
-			referral_region_config
-		ORDER BY
-			ANY_VALUE(created_at)
-		DESC
+		SELECT t1.*
+		FROM referral_region_config t1
+		WHERE t1.created_at =
+			(SELECT t2.created_at
+                 FROM referral_region_config t2
+                 WHERE t2.region_id = t1.region_id            
+                 ORDER BY t2.created_at DESC
+                 LIMIT 1)
 		""")
 except Exception as e:
 	slack_message(': <!channel> ERROR Unable to read current region configurations: '+ str(e))
