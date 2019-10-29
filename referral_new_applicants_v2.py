@@ -87,10 +87,10 @@ try:
 		FROM referral_region_config t1
 		WHERE t1.created_at =
 			(SELECT t2.created_at
-                 FROM referral_region_config t2
-                 WHERE t2.region_id = t1.region_id            
-                 ORDER BY t2.created_at DESC
-                 LIMIT 1)
+			FROM referral_region_config t2
+			WHERE t2.region_id = t1.region_id            
+			ORDER BY t2.created_at DESC
+			LIMIT 1)
 		""")
 except Exception as e:
 	slack_message(': <!channel> ERROR Unable to read current region configurations: '+ str(e))
