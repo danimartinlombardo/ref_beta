@@ -18,7 +18,7 @@ os.system('clear')
 ###FETCH NEW BONUS DATA
 try:
 	con_ms = pymysql.connect(db= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
-	cur_pg = con_ms.cursor()
+	cur_ms = con_ms.cursor()
 	cur_ms.execute('''
 			SELECT
 				rf.godfather_id||'_'||rf.applicant_id||'_referrer' as referral_bonus_id,
@@ -66,7 +66,7 @@ try:
 				and bonus_request_id IS NULL
 				and rf.conditions_amount_granted_applicant >0;
 		''')
-except psycopg2.Error as e:
+except pymysql.Error as e:
 	print('Unable read bonus request data: '+ str(e))
 	slack_message(': <!channel> ERROR Unable read bonus request data: '+ str(e))
 	exit()
