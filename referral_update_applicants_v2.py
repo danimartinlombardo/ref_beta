@@ -3,6 +3,8 @@ import psycopg2
 import os, sys
 import requests
 import time
+import pandas as pd
+from sqlalchemy import create_engine
 from credentials import *
 
 start_time = time.time()
@@ -15,26 +17,128 @@ def slack_message (text):
 
 os.system('clear')
 
+###REFRESH REGIONS TABLE AT MYSQL
+try:
+	con_ms = pymysql.connect(db= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
+	cur_ms = con_ms.cursor()
+	cur_ms.execute("""DROP TABLE IF EXISTS regions""")
+	con_ms.commit()
+except psycopg2.Error as e:
+	print('Error deleting regions table: '+ str(e))
+
+try:
+	con_rs=psycopg2.connect(dbname= 'dwh', host='cabify-datawarehouse.cxdpjwjwbg9i.eu-west-1.redshift.amazonaws.com', port= '5439', user= db_rs_user, password= db_rs_pass)
+	regions = pd.read_sql_query("SELECT id_region as region_id, ds_time_zone as time_zone FROM datawarehouse.ops_dim_region", con_rs)
+except psycopg2.Error as e:
+	print('Error reading RS regions table: '+ str(e))
+
+sqlEngine = create_engine('mysql+pymysql://'+db_ms_user+':'+db_ms_pass+'@35.195.80.162/GRW_drivers')
+dbConnection = sqlEngine.connect()
+
+df_regions = pd.DataFrame(data=regions)
+try:
+    frame = df_regions.to_sql("regions", dbConnection)
+except ValueError as vx:
+    print(vx)
+except Exception as ex:
+    print(ex)
+else:
+    print("Table regions created successfully.");
+finally:
+    dbConnection.close()
+
+#REFRESH JOURNEYS TABLE AT MYSQL
+try:
+	con_ms = pymysql.connect(db= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
+	cur_ms = con_ms.cursor()
+	cur_ms.execute("""DROP TABLE IF EXISTS journeys""")
+	con_ms.commit()
+except psycopg2.Error as e:
+	print('Error deleting journeys table: '+ str(e))
+
+try:
+	con_ms = pymysql.connect(db= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
+	active_participants = pd.read_sql_query("""SELECT applicant_id, dateline_dttm FROM referral_participants WHERE state = 'on_time'""", con_ms)
+	applicant_list = active_participants.values.tolist()
+	print("Reading active participants succeeded: "+str(len(applicant_list))+" participants")
+except pymysql.Error as e:
+	print('Error reading active participants: '+ str(e))
+
+try:
+	con_rs=psycopg2.connect(dbname= 'dwh', host='cabify-datawarehouse.cxdpjwjwbg9i.eu-west-1.redshift.amazonaws.com', port= '5439', user= db_rs_user, password= db_rs_pass)
+	journeys = pd.read_sql_query('''
+		SELECT
+			j.id_journey as journey_id,
+			d.id_driver as driver_id,
+			es.ds_end_state as end_state,
+			j.tm_start_utc_at as start_at,
+			r.id_region as region_id,
+			jt.ds_pricing_source
+		FROM datawarehouse.ops_fac_journey j
+			inner join datawarehouse.ops_dim_end_state es ON j.fk_end_state_id = es.sk_end_state
+			inner join datawarehouse.ops_dim_driver d ON j.fk_driver_id = d.sk_driver
+			inner join datawarehouse.ops_fac_journeytotals jt ON jt.fk_journey_id = j.sk_journey
+			inner join datawarehouse.ops_dim_region r on j.fk_region_id = r.sk_region
+		WHERE
+			j.id_journey = 'd037ea5c71eb45b28fbfccc4ef9db08b'
+		''',con_rs)
+	print("Initial dataframe created")
+except psycopg2.Error as e:
+	print('Error creating initial dataframe: '+ str(e))
+
+applicant_counter = 0
+for applicant in applicant_list:
+	applicant_counter = applicant_counter + 1
+	try:
+		con_rs=psycopg2.connect(dbname= 'dwh', host='cabify-datawarehouse.cxdpjwjwbg9i.eu-west-1.redshift.amazonaws.com', port= '5439', user= db_rs_user, password= db_rs_pass)
+		journeys_driver = pd.read_sql_query('''
+			SELECT
+				j.id_journey as journey_id,
+				d.id_driver as driver_id,
+				es.ds_end_state as end_state,
+				j.tm_start_utc_at as start_at,
+				r.id_region as region_id,
+				jt.ds_pricing_source
+			FROM datawarehouse.ops_fac_journey j
+				inner join datawarehouse.ops_dim_end_state es ON j.fk_end_state_id = es.sk_end_state
+				inner join datawarehouse.ops_dim_driver d ON j.fk_driver_id = d.sk_driver
+				inner join datawarehouse.ops_fac_journeytotals jt ON jt.fk_journey_id = j.sk_journey
+				inner join datawarehouse.ops_dim_region r on j.fk_region_id = r.sk_region
+			WHERE
+				d.id_driver = %(id)s
+				and j.tm_start_utc_at < date_trunc('day', DATEADD(day, +1, %(te)s))
+				and j.fk_end_state_id = 4
+			''',con_rs, params={"id":applicant[0], "te":applicant[1]})
+		journeys = journeys.append(journeys_driver, ignore_index=True)
+		if applicant_counter == len(applicant_list):
+			print("Inserting participant "+str(applicant_counter))
+		else: print("Inserting participant "+str(applicant_counter), end="\r")
+	except psycopg2.Error as e:
+		print('Error reading RS journeys table: '+ str(e))
+print("Dataframe shape: "+str(journeys.shape))
+
+sqlEngine = create_engine('mysql+pymysql://'+db_ms_user+':'+db_ms_pass+'@35.195.80.162/GRW_drivers')
+dbConnection = sqlEngine.connect()
+
+try:
+    frame = journeys.to_sql("journeys", dbConnection)
+except ValueError as vx:
+    print(vx)
+except Exception as ex:
+    print(ex)
+else:
+    print("Table journeys created successfully.");
+finally:
+    dbConnection.close()
+
 ###UPDATE APPLICANTS: DB
 try:
-	con_ms = psycopg2.connect(dbname= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
+	con_ms = pymysql.connect(db= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
 	cur_ms = con_ms.cursor()
 	cur_ms.execute("""
-		UPDATE referral_participants
-		SET
-			do_num = (data_update.do_num - data_update.do_strange_num),
-			do_strange_num = data_update.do_strange_num,
-    		state = (case
-					when data_update.dateline_dttm < ((Now() at time zone data_update.time_zone) - Interval '9 days') then 'obsolete'
-					when data_update.dateline_dttm < ((Now() at time zone data_update.time_zone) - Interval '7 days') then 'clear'
-					when (data_update.do_num - data_update.do_strange_num)  >= data_update.conditions_required_do then 'achieved'
-					when data_update.dateline_dttm > (Now() at time zone data_update.time_zone) then 'on_time'
-					else 'expired'
-				end),
-    		updated_at_utc = Now(),
-    		updated_at_local = timezone(data_update.time_zone, timezone('UTC', Now()))
-		FROM (
-			SELECT
+	UPDATE referral_participants rfp
+		inner join (
+		SELECT
 				a.applicant_id,
 				a.do_num,
 				a.dateline_dttm,
@@ -48,23 +152,32 @@ try:
 					rf.conditions_required_do,
 					r.time_zone,
 					count(j.journey_id) as do_num,
-					SUM(case 
-        				when j.alerts like '%distance_too_short%' or j.alerts like '%duration_too_short%' then 1 
-        				else 0
-        				end) as do_strange_num
+					SUM(case when j.ds_pricing_source = 'strange_journey' then 1 else 0 end) as do_strange_num
 				FROM
-					bp.referral_participants rf
+					referral_participants rf
 					inner join journeys j on rf.applicant_id = j.driver_id
 					inner join regions r on j.region_id = r.region_id
 				WHERE
-					timezone(r.time_zone, timezone('UTC', j.start_at)) < rf.dateline_dttm
+					CONVERT_TZ(j.start_at, 'UTC', r.time_zone) < rf.dateline_dttm
 					and j.end_state = 'drop off'
 					and rf.state != 'obsolete'
 				group by 1,2,3,4) a
       		) AS data_update
+		SET
+			rfp.do_num = (data_update.do_num - data_update.do_strange_num),
+			rfp.do_strange_num = data_update.do_strange_num,
+    		rfp.state = (case
+					when data_update.dateline_dttm < DATE_ADD(CONVERT_TZ(Now(), 'UTC', data_update.time_zone), Interval -9 DAY ) then 'obsolete'
+					when data_update.dateline_dttm < DATE_ADD(CONVERT_TZ(Now(), 'UTC', data_update.time_zone), Interval -7 DAY ) then 'clear'
+					when (data_update.do_num - data_update.do_strange_num)  >= data_update.conditions_required_do then 'achieved'
+					when data_update.dateline_dttm > (CONVERT_TZ(Now(), 'UTC', data_update.time_zone)) then 'on_time'
+					else 'expired'
+				end),
+    		rfp.updated_at_utc = Now(),
+    		rfp.updated_at_local = CONVERT_TZ(Now(), 'UTC', data_update.time_zone)
 		WHERE
-			referral_participants.applicant_id=data_update.applicant_id
-	""")
+			rfp.applicant_id=data_update.applicant_id;
+		""")
 	con_ms.commit()
 except psycopg2.Error as e:
 	slack_message(': <!channel> ERROR Unable to update participants data: '+ str(e))
@@ -77,29 +190,29 @@ try:
 	cur_ms.execute("""	
 		SELECT
 			q.external_id,
-			'"'||string_agg (q.fullname_quote, ', ')||'"' as referrals_name,
-			'"'||string_agg (q.email_quote, ', ')||'"' as referrals_email,
-			'"'||string_agg (q.dateline_quote, ', ')||'"' as referrals_dateline,
-			'"'||string_agg (q.required_do_quote, ', ')||'"' as referrals_required_do,
-			'"'||string_agg (q.state_quote, ', ')||'"' as referrals_state,
-			'"'||string_agg (q.actual_do_quote, ', ')||'"' as referrals_actual_do,
-			'"'||string_agg (q.updated_at_local_quote, ', ')||'"' as referrals_updated_at_local,
-			'"'||string_agg (q.week_num_quote, ', ')||'"' as referrals_conditions_week_num,
-			'"'||string_agg (q.amount_godfather_quote, ', ')||'"' as referrals_conditions_godfather_amount,
-			'"'||string_agg (q.amount_applicant_quote, ', ')||'"' as referrals_conditions_applicant_amount
+			GROUP_CONCAT(q.fullname_quote SEPARATOR ', ') as referrals_name,
+			GROUP_CONCAT(q.email_quote SEPARATOR ', ') as referrals_email,
+			GROUP_CONCAT(q.dateline_quote SEPARATOR ', ') as referrals_dateline,
+			GROUP_CONCAT(q.required_do_quote SEPARATOR ', ') as referrals_required_do,
+			GROUP_CONCAT(q.state_quote SEPARATOR ', ') as referrals_state,
+			GROUP_CONCAT(q.actual_do_quote SEPARATOR ', ') as referrals_actual_do,
+			GROUP_CONCAT(q.updated_at_local_quote SEPARATOR ', ') as referrals_updated_at_local,
+			GROUP_CONCAT(q.week_num_quote SEPARATOR ', ') as referrals_conditions_week_num,
+			GROUP_CONCAT(q.amount_godfather_quote SEPARATOR ', ') as referrals_conditions_godfather_amount,
+			GROUP_CONCAT(q.amount_applicant_quote SEPARATOR ', ') as referrals_conditions_applicant_amount
 		FROM
 			(SELECT
 				rp.godfather_id as external_id,
 				(case when rp.state='clear' then '' else rp.applicant_fullname end ) as fullname_quote,
 				(case when rp.state='clear' then '' else rp.applicant_email end) as email_quote,
-				(case when rp.state='clear' then '' else ''''||(to_char(rp.dateline_dttm,'DD/MM/YYYY'))||'''' end) as dateline_quote,
-				(case when rp.state='clear' then '' else (rp.conditions_required_do)::text end) as required_do_quote,
+				(case when rp.state='clear' then '' else (CAST(rp.dateline_dttm as char)) end) as dateline_quote,
+				(case when rp.state='clear' then '' else (CAST(rp.conditions_required_do as char)) end) as required_do_quote,
 				(case when rp.state='clear' then '' else rp.state end) as state_quote,
-				(case when rp.state='clear' then '' else (rp.do_num)::text end) as actual_do_quote,
-				(case when rp.state='clear' then '' else ''''||(to_char(rp.updated_at_local,'DD/MM/YYYY HH:MI'))||'''' end) as updated_at_local_quote,
-				(case when rp.state='clear' then '' else (rp.conditions_week_num)::text end) as week_num_quote,
-				(case when rp.state='clear' then '' else (rp.conditions_amount_granted_godfather)::text end) as amount_godfather_quote,
-				(case when rp.state='clear' then '' else (rp.conditions_amount_granted_applicant)::text end) as amount_applicant_quote
+				(case when rp.state='clear' then '' else (CAST(rp.do_num as char)) end) as actual_do_quote,
+				(case when rp.state='clear' then '' else (CAST(rp.updated_at_local as char)) end) as updated_at_local_quote,
+				(case when rp.state='clear' then '' else (CAST(rp.conditions_week_num as char)) end) as week_num_quote,
+				(case when rp.state='clear' then '' else (CAST(rp.conditions_amount_granted_godfather as char)) end) as amount_godfather_quote,
+				(case when rp.state='clear' then '' else (CAST(rp.conditions_amount_granted_applicant as char)) end) as amount_applicant_quote
 			FROM
 				referral_participants rp
 			WHERE rp.state != 'obsolete'
@@ -127,29 +240,29 @@ try:
 	cur_ms.execute("""	
 		SELECT
 			q.external_id,
-			'"'||string_agg (q.fullname_quote, ', ')||'"' as referrals_godfather_name,
-			'"'||string_agg (q.email_quote, ', ')||'"' as referrals_godfather_email,
-			'"'||string_agg (q.dateline_quote, ', ')||'"' as referrals_applicant_dateline,
-			'"'||string_agg (q.required_do_quote, ', ')||'"' as referrals_applicant_required_do,
-			'"'||string_agg (q.state_quote, ', ')||'"' as referrals_applicant_state,
-			'"'||string_agg (q.actual_do_quote, ', ')||'"' as referrals_applicant_actual_do,
-			'"'||string_agg (q.updated_at_local_quote, ', ')||'"' as referrals_applicant_updated_at_local,
-			'"'||string_agg (q.week_num_quote, ', ')||'"' as referrals_applicant_week_num,
-			'"'||string_agg (q.amount_godfather_quote, ', ')||'"' as referrals_applicant_amount_godfather,
-			'"'||string_agg (q.amount_applicant_quote, ', ')||'"' as referrals_applicant_amount
+			GROUP_CONCAT(q.fullname_quote SEPARATOR ', ') as referrals_godfather_name,
+			GROUP_CONCAT(q.email_quote SEPARATOR ', ') as referrals_godfather_email,
+			GROUP_CONCAT(q.dateline_quote SEPARATOR ', ') as referrals_applicant_dateline,
+			GROUP_CONCAT(q.required_do_quote SEPARATOR ', ') as referrals_applicant_required_do,
+			GROUP_CONCAT(q.state_quote SEPARATOR ', ') as referrals_applicant_state,
+			GROUP_CONCAT(q.actual_do_quote SEPARATOR ', ') as referrals_applicant_actual_do,
+			GROUP_CONCAT(q.updated_at_local_quote SEPARATOR ', ') as referrals_applicant_updated_at_local,
+			GROUP_CONCAT(q.week_num_quote SEPARATOR ', ') as referrals_applicant_week_num,
+			GROUP_CONCAT(q.amount_godfather_quote SEPARATOR ', ') as referrals_applicant_amount_godfather,
+			GROUP_CONCAT(q.amount_applicant_quote SEPARATOR ', ') as referrals_applicant_amount
 		FROM
 			(SELECT
 				rp.applicant_id as external_id,
 				(case when rp.state='clear' then '' else rp.godfather_fullname end ) as fullname_quote,
 				(case when rp.state='clear' then '' else rp.applicant_code end) as email_quote,
-				(case when rp.state='clear' then '' else ''''||(to_char(rp.dateline_dttm,'DD/MM/YYYY'))||'''' end) as dateline_quote,
-				(case when rp.state='clear' then '' else (rp.conditions_required_do)::text end) as required_do_quote,
+				(case when rp.state='clear' then '' else (CAST(rp.dateline_dttm as char)) end) as dateline_quote,
+				(case when rp.state='clear' then '' else (CAST(rp.conditions_required_do as char)) end) as required_do_quote,
 				(case when rp.state='clear' then '' else rp.state end) as state_quote,
-				(case when rp.state='clear' then '' else (rp.do_num)::text end) as actual_do_quote,
-				(case when rp.state='clear' then '' else ''''||(to_char(rp.updated_at_local,'DD/MM/YYYY HH:MI'))||'''' end) as updated_at_local_quote,
-				(case when rp.state='clear' then '' else (rp.conditions_week_num)::text end) as week_num_quote,
-				(case when rp.state='clear' then '' else (rp.conditions_amount_granted_godfather)::text end) as amount_godfather_quote,
-				(case when rp.state='clear' then '' else (rp.conditions_amount_granted_applicant)::text end) as amount_applicant_quote
+				(case when rp.state='clear' then '' else (CAST(rp.do_num as char)) end) as actual_do_quote,
+				(case when rp.state='clear' then '' else (CAST(rp.updated_at_local as char)) end) as updated_at_local_quote,
+				(case when rp.state='clear' then '' else (CAST(rp.conditions_week_num as char)) end) as week_num_quote,
+				(case when rp.state='clear' then '' else (CAST(rp.conditions_amount_granted_godfather as char)) end) as amount_godfather_quote,
+				(case when rp.state='clear' then '' else (CAST(rp.conditions_amount_granted_applicant as char)) end) as amount_applicant_quote
 			FROM
 				referral_participants rp
 			WHERE rp.state != 'obsolete'
@@ -159,7 +272,7 @@ try:
 except psycopg2.Error as e:
 	slack_message(': <!channel> ERROR Unable to create Braze arrays for applicants: '+ str(e))
 	print(': <!channel> ERROR Unable to create Braze arrays for applicants: '+ str(e))
-	exit()
+	exit()	
 braze_applicants = cur_ms.fetchall()
 for applicant in braze_applicants:	
 	try:
