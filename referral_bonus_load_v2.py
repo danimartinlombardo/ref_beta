@@ -20,51 +20,51 @@ try:
 	con_ms = pymysql.connect(db= 'GRW_drivers', host='35.195.80.162', user=db_ms_user, password= db_ms_pass)
 	cur_ms = con_ms.cursor()
 	cur_ms.execute('''
-			SELECT
-				rf.godfather_id||'_'||rf.applicant_id||'_referrer' as referral_bonus_id,
-				rf.first_do_region_id as region_id,
-				rf.timezone,
-				rf.godfather_id as driver_id,
-				rf.conditions_amount_granted_godfather as amount,
-				rf.currency,
-				rf.currency_factor,
-				rf.tax_code,
-				date_trunc('day', Now()-Interval'1 day')::date as amount_dated_at,
-				'Referral program. Referrer: '||rf.godfather_id||'. Applicant: '||rf.applicant_id as notes,
-				'Programa de referidos: referido '||rf.applicant_fullname||' ('||rf.applicant_email||')' as explanation,
-				'referral' as category,
-				Now() as created_at_utc,
-				rf.applicant_id as applicant_id,
-				'godfather' as type
-			FROM
-				referral_participants rf
-			WHERE
-				rf.state = 'achieved'
-				and bonus_request_id IS NULL
-				and rf.conditions_amount_granted_godfather >0
-			UNION ALL
-			SELECT
-				rf.godfather_id||'_'||rf.applicant_id||'_referred' as referral_bonus_id,
-				rf.first_do_region_id as region_id,
-				rf.timezone,
-				rf.applicant_id as driver_id,
-				rf.conditions_amount_granted_applicant as amount,
-				rf.currency,
-				rf.currency_factor,
-				rf.tax_code,
-				date_trunc('day', Now()-Interval'1 day')::date as amount_dated_at,
-				'Referral program. Referrer: '||rf.godfather_id||'. Applicant: '||rf.applicant_id as notes,
-				'Programa de referidos: referente '||rf.applicant_fullname||' ('||rf.applicant_email||')' as explanation,
-				'referral' as category,
-				Now() as created_at_utc,
-				rf.applicant_id as applicant_id,
-				'applicant' as type
-			FROM
-				referral_participants rf
-			WHERE
-				rf.state = 'achieved'
-				and bonus_request_id IS NULL
-				and rf.conditions_amount_granted_applicant >0;
+		SELECT
+                CONCAT(rf.godfather_id,'_',rf.applicant_id,'_referrer') as referral_bonus_id,
+                rf.first_do_region_id as region_id,
+                rf.timezone,
+                rf.godfather_id as driver_id,
+                rf.conditions_amount_granted_godfather as amount,
+                rf.currency,
+                rf.currency_factor,
+                rf.tax_code,
+                CAST(DATE_FORMAT(DATE_ADD(Now(), Interval -1 DAY), "%Y-%m-%d") as date) as amount_dated_at,
+                CONCAT('Referral program. Referrer: ', rf.godfather_id, '. Applicant: ', rf.applicant_id) as notes,
+                CONCAT('Programa de referidos: referido ', rf.applicant_fullname, rf.applicant_email) as explanation,
+                'referral' as category,
+                Now() as created_at_utc,
+                rf.applicant_id as applicant_id,
+                'godfather' as type
+        FROM
+                referral_participants rf
+        WHERE
+                rf.state = 'achieved'
+                and bonus_request_id IS NULL
+                and rf.conditions_amount_granted_godfather >0
+        UNION ALL
+        SELECT
+                CONCAT(rf.godfather_id,'_',rf.applicant_id,'_referred') as referral_bonus_id,
+                rf.first_do_region_id as region_id,
+                rf.timezone,
+                rf.applicant_id as driver_id,
+                rf.conditions_amount_granted_applicant as amount,
+                rf.currency,
+                rf.currency_factor,
+                rf.tax_code,
+                CAST(DATE_FORMAT(DATE_ADD(Now(), Interval -1 DAY), "%Y-%m-%d") as date),
+                CONCAT('Referral program. Referrer: ', rf.godfather_id, '. Applicant: ', rf.applicant_id) as notes,
+                CONCAT('Programa de referidos: referente ', rf.applicant_fullname, rf.applicant_email) as explanation,
+                'referral' as category,
+                Now() as created_at_utc,
+                rf.applicant_id as applicant_id,
+                'applicant' as type
+    	FROM
+                referral_participants rf
+        WHERE
+                rf.state = 'achieved'
+                and bonus_request_id IS NULL
+                and rf.conditions_amount_granted_applicant >0;
 		''')
 except pymysql.Error as e:
 	print('Unable read bonus request data: '+ str(e))
