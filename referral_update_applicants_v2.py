@@ -188,18 +188,18 @@ except psycopg2.Error as e:
 ###UPDATE APPLICANTS: BRAZE (GODFATHERS)
 try:
 	cur_ms.execute("""	
-		SELECT
+SELECT
             q.external_id,
-            GROUP_CONCAT(CONCAT('"',q.fullname_quote,'"') SEPARATOR ', ') as referrals_name,
-            GROUP_CONCAT(CONCAT('"',q.email_quote,'"') SEPARATOR ', ') as referrals_email,
-            GROUP_CONCAT(CONCAT('"',q.dateline_quote,'"') SEPARATOR ', ') as referrals_dateline,
-            GROUP_CONCAT(CONCAT('"',q.required_do_quote,'"') SEPARATOR ', ') as referrals_required_do,
-            GROUP_CONCAT(CONCAT('"',q.state_quote,'"') SEPARATOR ', ') as referrals_state,
-            GROUP_CONCAT(CONCAT('"',q.actual_do_quote,'"') SEPARATOR ', ') as referrals_actual_do,
-            GROUP_CONCAT(CONCAT('"',q.updated_at_local_quote,'"') SEPARATOR ', ') as referrals_updated_at_local,
-            GROUP_CONCAT(CONCAT('"',q.week_num_quote,'"') SEPARATOR ', ') as referrals_conditions_week_num,
-            GROUP_CONCAT(CONCAT('"',q.amount_godfather_quote,'"') SEPARATOR ', ') as referrals_conditions_godfather_amount,
-            GROUP_CONCAT(CONCAT('"',q.amount_applicant_quote,'"') SEPARATOR ', ') as referrals_conditions_applicant_amount
+            CONCAT('"',GROUP_CONCAT(q.fullname_quote SEPARATOR ', '),'"') as referrals_name,
+            CONCAT('"',GROUP_CONCAT(q.email_quote SEPARATOR ', '),'"') as referrals_email,
+            CONCAT('"',GROUP_CONCAT(CONCAT("'",q.dateline_quote,"'") SEPARATOR ', '),'"') as referrals_dateline,
+            CONCAT('"',GROUP_CONCAT(q.required_do_quote SEPARATOR ', '),'"') as referrals_required_do,
+            CONCAT('"',GROUP_CONCAT(q.state_quote SEPARATOR ', '),'"') as referrals_state,
+            CONCAT('"',GROUP_CONCAT(q.actual_do_quote SEPARATOR ', '),'"') as referrals_actual_do,
+            CONCAT('"',GROUP_CONCAT(CONCAT("'",q.updated_at_local_quote,"'") SEPARATOR ', '),'"') as referrals_updated_at_local,
+            CONCAT('"',GROUP_CONCAT(q.week_num_quote SEPARATOR ', '),'"') as referrals_conditions_week_num,
+            CONCAT('"',GROUP_CONCAT(q.amount_godfather_quote SEPARATOR ', '),'"') as referrals_conditions_godfather_amount,
+            CONCAT('"',GROUP_CONCAT(q.amount_applicant_quote SEPARATOR ', '),'"') as referrals_conditions_applicant_amount
         FROM
             (SELECT
                 rp.godfather_id as external_id,
@@ -215,8 +215,8 @@ try:
                 (case when rp.state='clear' then '' else (CAST(rp.conditions_amount_granted_applicant as char)) end) as amount_applicant_quote
             FROM
                 referral_participants rp
-        WHERE rp.state != 'obsolete'
-        ORDER BY rp.godfather_id, rp.created_at_utc, rp.applicant_email) q
+            WHERE rp.state != 'obsolete'
+            ORDER BY rp.godfather_id, rp.created_at_utc, rp.applicant_email) q
         GROUP BY 1;
 	""")
 	#print ('Braze arrays ready to upload')
@@ -238,18 +238,18 @@ for godfather in braze_arrays:
 ###UPDATE APPLICANTS: BRAZE (APPLICANTS)
 try:
 	cur_ms.execute("""	
-		SELECT
+SELECT
             q.external_id,
-            GROUP_CONCAT(CONCAT('"',q.fullname_quote,'"') SEPARATOR ', ') as referrals_godfather_name,
-            GROUP_CONCAT(CONCAT('"',q.email_quote,'"') SEPARATOR ', ') as referrals_godfather_email,
-            GROUP_CONCAT(CONCAT('"',q.dateline_quote,'"') SEPARATOR ', ') as referrals_applicant_dateline,
-            GROUP_CONCAT(CONCAT('"',q.required_do_quote,'"') SEPARATOR ', ') as referrals_applicant_required_do,
-            GROUP_CONCAT(CONCAT('"',q.state_quote,'"') SEPARATOR ', ') as referrals_applicant_state,
-            GROUP_CONCAT(CONCAT('"',q.actual_do_quote,'"') SEPARATOR ', ') as referrals_applicant_actual_do,
-            GROUP_CONCAT(CONCAT('"',q.updated_at_local_quote,'"') SEPARATOR ', ') as referrals_applicant_updated_at_local,
-            GROUP_CONCAT(CONCAT('"',q.week_num_quote,'"') SEPARATOR ', ') as referrals_applicant_week_num,
-            GROUP_CONCAT(CONCAT('"',q.amount_godfather_quote,'"') SEPARATOR ', ') as referrals_applicant_amount_godfather,
-            GROUP_CONCAT(CONCAT('"',q.amount_applicant_quote,'"') SEPARATOR ', ') as referrals_applicant_amount
+            CONCAT('"',GROUP_CONCAT(q.fullname_quote SEPARATOR ', '),'"') as referrals_godfather_name,
+            CONCAT('"',GROUP_CONCAT(q.email_quote SEPARATOR ', '),'"') as referrals_godfather_email,
+            CONCAT('"',GROUP_CONCAT(CONCAT("'",q.dateline_quote,"'") SEPARATOR ', '),'"') as referrals_applicant_dateline,
+            CONCAT('"',GROUP_CONCAT(q.required_do_quote SEPARATOR ', '),'"') as referrals_applicant_required_do,
+            CONCAT('"',GROUP_CONCAT(q.state_quote SEPARATOR ', '),'"') as referrals_applicant_state,
+            CONCAT('"',GROUP_CONCAT(q.actual_do_quote SEPARATOR ', '),'"') as referrals_applicant_actual_do,
+            CONCAT('"',GROUP_CONCAT(CONCAT("'",q.updated_at_local_quote,"'") SEPARATOR ', '),'"') as referrals_applicant_updated_at_local,
+            CONCAT('"',GROUP_CONCAT(q.week_num_quote SEPARATOR ', '),'"') as referrals_applicant_week_num,
+            CONCAT('"',GROUP_CONCAT(q.amount_godfather_quote SEPARATOR ', '),'"') as referrals_applicant_amount_godfather,
+            CONCAT('"',GROUP_CONCAT(q.amount_applicant_quote SEPARATOR ', '),'"') as referrals_applicant_amount
         FROM
             (SELECT
                 rp.applicant_id as external_id,
@@ -265,8 +265,8 @@ try:
                 (case when rp.state='clear' then '' else (CAST(rp.conditions_amount_granted_applicant as char)) end) as amount_applicant_quote
             FROM
                 referral_participants rp
-        WHERE rp.state != 'obsolete'
-        ORDER BY rp.applicant_id, rp.created_at_utc, rp.applicant_email) q
+            WHERE rp.state != 'obsolete'
+            ORDER BY rp.applicant_id, rp.created_at_utc, rp.applicant_email) q
         GROUP BY 1;
 	""")
 except psycopg2.Error as e:
